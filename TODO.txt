@@ -1,0 +1,7 @@
+- Lire [Lagrée et al., 2017]
+- Ecrire la review
+- Ecrire formellement le problème de recommandation avec sérendipité
+- Décrire une méthode
+- Faire le benchmark avec MovieLens
+X Récupérer le code de [Abbassi et al., 2009]
+- Récupérer un code de collaborative filtering (type Netflix challenge)
