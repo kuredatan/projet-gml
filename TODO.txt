@@ -1,7 +1,21 @@
-- Lire [Lagrée et al., 2017]
-- Ecrire la review
-- Ecrire formellement le problème de recommandation avec sérendipité
-- Décrire une méthode
-- Faire le benchmark avec MovieLens
-X Récupérer le code de [Abbassi et al., 2009]
-- Récupérer un code de collaborative filtering (type Netflix challenge)
+## REPOSITORY
+
+https://github.com/kuredatan/projet-gml
+
+## TODO LIST (steps)
+
+X Review [Lagrée et al., 2017] + some more references (see file article_review.txt)
+- Formalize the problem of recommendation with serendipity
+- Implement the method suggested in [Lagrée et al., 2017] (C++)
+X Get code of [Abbassi et al., 2009]
+- Compare with (baselines and state-of-the-art algorithms) Linear UCB, IMLinUCB (?), Greedy strategies,and other classic methods for recommendation (Netflix challenge, ...)
+- Set up the benchmark pipeline: use DeepMind package for graph neural networks: https://github.com/deepmind/graph_nets 
+- Measures for validation: recommendation and serendipity: can be regret and user global stickiness that should increase
+X Get MovieLens database
+- Report 5-10 pages in NIPS format (on the top of your report: write the name of your supervisor)
+
+## DEADLINES
+
+- DL of submission  7. 1. 2019
+on the DL for the submission, students send their project report to the supervisor listed as “Contact” and cc the course TA (pierre.perrault@outlook.com). 
+- project presentations from  11. 1. 2019  over skype/hangout about 15+5 minutes per project. time your presentation for 15 minutes  (otherwise your grade will be affected). Check your video/audio before and the way how you can share the slides on the screen. project presentations over skype/hangout students will contact the project supervisor (not the instructor or TA) and agree on the skype/hangout presentation
