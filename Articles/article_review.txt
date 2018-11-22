@@ -131,4 +131,11 @@ TODO
 
 "In real world, reward for an action might not be constant. Rotting Bandit models the specific case where the value may (or may not) decay each time an action is taken. Such setup can model boredom in recommender system or cost increment due to repetition (e.g. scarcity of resource). Our recent work suggests that this problem is in fact as easy as classic stochastic bandit, as a simple but well designed strategy (FEWA [3] can recover similar regret bounds on the rotting bandit problem than UCB1 on the stochastic bandit problem [1]." (extracted from the class project webpage)
 
+Other useful (?) references:
+
+* Gentile, C., Li, S., Kar, P., Karatzoglou, A., Zappella, G., & Etrue, E. (2017, July). On context-dependent clustering of bandits. In International Conference on Machine Learning (pp. 1253-1262). https://arxiv.org/pdf/1608.03544.pdf
+
+* Ekstrand, M. D., Riedl, J. T., & Konstan, J. A. (2011). Collaborative filtering recommender systems. Foundations and Trends® in Human–Computer Interaction, 4(2), 81-173. http://www.nowpublishers.com/article/DownloadSummary/HCI-009
+
+* Spectral Bandits 
 

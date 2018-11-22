@@ -1,0 +1,5 @@
+\usepackage[final]{nips_2018}
+
+https://nips.cc/Conferences/2016/PaperInformation/StyleFiles
+
+4-6 pages

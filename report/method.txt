@@ -1,0 +1,37 @@
+
+## PROBLEM OF RECOMMENDATION WITH SERENDIPITY
+
+Input: 
+- U set of users
+- O set of objects
+- s_o (attribute-based) similarity between objects
+- s_u (behavioural) similarity between users
+- u a specific user asking for a recommendation among objects in O
+- t serendipity threshold (in % of people in userbase/user network that have seen the object)
+
+Output:
+- object o with two characteristics:
+-> likely to be enjoyed by user u: "item relevance"
+-> outside what u is used to see: "item novelty"
+
+## FORMALIZATION OF ITEM RELEVANCE AND NOVELTY
+
+- Item relevance: ?
+- Item novelty: ?
+
+## METHOD
+
+- Online inference of user network (let us assume for now that the set of users is fixed)
+- A part of the ratings is known, the other is hidden and will be used for validation
+- A priori, the set of objects is fixed and the (attribute-based) similarity graph of objects is fully known (?)
+- Apply OIMP algorithm to recommend one object (candidate) to user u (a priori, horizon T = 1 ?) where little is known about the ratings of user u
+
+## MEASURES OF VALIDATION OF RESULTS
+
+Suggestions: expected cumulative regret from IM
+- wrt item relevance: ?
+- wrt item novelty: ?
+
+---------------------------------------------------------------------------------------------------
+
+

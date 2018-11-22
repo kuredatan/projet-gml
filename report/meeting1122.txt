@@ -1,0 +1,50 @@
+Meeting with Claire Vernade, on 11/22/18 4pm-5pm
+
+## Formalization of the problem of recommendation with serendipity
+
+Serendipities are objects that are unexpectedly enjoyable. A more formal definition would be, given a serendipity threshold t, a similarity graph on the objects, and a given user to which recommendations would be made, serendipities are objects that are located in unexplored (with respect to the considered user) object regions (i.e. strongly connected components of the graph), at distance (in terms of length of the shortest path from explored regions to the considered unexplored region) greater than t, such that these objects can increase in expectation the diameter of the explored regions of the similarity graph by the user across time. In mathematical terms:
+
+* G(V, E), undirected, unweighted similarity graph on objects
+* u, a user 
+* f^t_u : V -> {0, 1}, a function that indicates exploration of an object by user u (at time t)
+* r_u : V -> [|0, 1, 2|], a function of rating by user u of objects (1 means "not seen", 0 means "don't like", 2 means "like")
+* s, serendipity threshold
+Then we define the set of serendipities at a given point in time t as:
+S = {v in V : v = argmax_{v' in V, v' at distance min. s of an explored region of u} E(sum_{v" in V} [f^{t+1}_u(v")-f^{t}_u(v")]*r_u(v"))}
+(objects which are not in explored regions and give the greatest increase in the diameter of explored regions of the graph, weighted by the known ratings given by the user)
+
+where E is the expectation: exploration and rating of a node are drawn from a random distribution: when an object is recommended, we "make" the user explore the recommended node, and this modifies the exploration/rating distributions (if the user has enjoyed the recommended object, they will most likely be willing to explore the neighbours of this object).
+f_u would likely be submodular (a node can be explored only once, thus at a given point in time, the number of explored elements will increase less and less strongly).
+
+## Method
+
+The idea would be to use the OIMP (Online Influence Maximization with Persistence) method developped in [Lagrée et al., 2017]. The concept of restricting the set of candidates to a number K of objects (with their supports) might suit the idea to restrict recommendations to non-explored suitable regions:
+
+For a given user u, a fixed parameter K (number of candidates)
+For each round 1 up to a finite horizon T
+	Compute the set of relevant candidates c_1, ..., c_k with their support A_1, ..., A_k (*)
+	Compute a score of relevance for each candidate
+	Select the (1) candidate with the highest score
+	Observe reward r (rating of the recommended object by user u)
+	Write the associated regret: real best candidate reward (among the k selected candidates) - r
+	Improve the algorithm: update statistics accordingly for score computation
+Return cumulative regret up to horizon T for comparison with other methods
+In order to check the serendipity part, we can also keep track of the exploration of each object region: if the recommendation has succeeded in increasing the exploration of the user, the exploration of each region should increase: a mean to quantify this is to compute the volume of the parallelotope which relies on explored (by user u) objects o_1, o_2, ..., o_n as follows: V = (o_1, ..., o_n) and Vol(o_1, ..., o_n) = sqrt(det(V*V^T)) . This volume should increase more for recommendation with serendipity than for regular recommendation, because recommended objects are supposed to be less correlated (similar). [1]
+
+The goal of this algorithm is then to infer the real edge weights (which corresponds, for an edge (i, j), to the probability of user u liking object i (j) knowing its rating of object j (i)) in an online setting.
+
+[1] https://tel.archives-ouvertes.fr/tel-01435148/document
+
+(*) This is a difficult problem. Lagrée et al. suggest Max-degree or Cover as general strategies to find plausible candidates. One idea is to implement serendipity at this point of the bandit algorithm: select 1 "centroid" (either by K-means, or by Max-degree) in each unexplored object region at distance at least s from the explored regions.
+
+Another issue is the missing data in most of the datasets (MovieLens included). We can restrict movies to objects having a minimal number of ratings, and, for each movie, the reward is a noisy observation of the empirical mean of the ratings in the dataset (using multinomial or Gaussian distributions): "semi-simulated data".
+
+## Experimental setting
+
+Comparison with Random strategy, if time permits, with Rotting Bandits and Linear UCB. Horizon T = 1,000. Comparison of the expected cumulative regret and evolution of volume up to horizon T.
+
+
+
+
+
+
