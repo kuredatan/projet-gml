@@ -39,6 +39,10 @@ The goal of this algorithm is then to infer the real edge weights (which corresp
 
 Another issue is the missing data in most of the datasets (MovieLens included). We can restrict movies to objects having a minimal number of ratings, and, for each movie, the reward is a noisy observation of the empirical mean of the ratings in the dataset (using multinomial or Gaussian distributions): "semi-simulated data".
 
+## Hypotheses
+
+We implicitly assume that the number of "centroids" will be far lesser than the number of nodes in the object graph. When computing the regret, we also assume that the best "arm" we could use is among the K selected candidates, thus that we do not question the method with which we select the candidates, which is an hypothesis made in the [Lagrée et al., 2017] article.
+
 ## Experimental setting
 
 Comparison with Random strategy, if time permits, with Rotting Bandits and Linear UCB. Horizon T = 1,000. Comparison of the expected cumulative regret and evolution of volume up to horizon T.
