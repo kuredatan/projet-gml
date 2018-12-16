@@ -6,7 +6,7 @@ https://github.com/kuredatan/projet-gml
 
 X Review [Lagrée et al., 2017] + some more references (see file article_review.txt)
 X Formalize the problem of recommendation with serendipity
-- Implement the method suggested in [Lagrée et al., 2017] (C++)
+- Implement the method suggested in [Lagrée et al., 2017]
 X Get code of [Abbassi et al., 2009]
 - Compare with (baselines and state-of-the-art algorithms) Random, (Spectral) Rotting Bandits, Linear UCB, IMLinUCB (?), Greedy strategies, and other classic methods for recommendation (Netflix challenge, ...)
 - Set up the benchmark pipeline: use DeepMind package for graph neural networks: https://github.com/deepmind/graph_nets 

@@ -2,159 +2,155 @@
 
 import numpy as np
 import pandas as pd
-import scipy.spatial.distance as sd
 import argparse
+import os
+import matplotlib.pyplot as plt
+import scipy.spatial.distance as sd
+import seaborn as sns
 
 parser = argparse.ArgumentParser(description='Recommender system')
 parser.add_argument('--data', type=str, default='ml-1m', metavar='D',
                     help='folder where data is located.')
-parser.add_argument('--user', type=str, default='', metavar='U',
-                    help='user(name) to which the object should be recommended.')
-parser.add_argument('--thres', type=int, default=0, metavar='T',
+parser.add_argument('--user', type=int, default=1, metavar='U',
+                    help='userID to which the object should be recommended.')
+parser.add_argument('--thres', type=float, default=0., metavar='T',
                     help='serendipity threshold for the recommendation.')
+parser.add_argument('--eps', type=float, default=0, metavar='T',
+                    help='epsilon threshold to build epsilon neighbourhood similarity graph.')
+parser.add_argument('--k', type=int, default=0, metavar='T',
+                    help='k threshold to build k-nn similarity graph.')
+parser.add_argument('--var', type=float, default=1, metavar='T',
+                    help='variance value to build similarity graph.')
 args = parser.parse_args()
 
-dataset = "../Datasets/" + args.data + "/"
+path = "../Datasets/"
+dataset = path + args.data + "/"
 print("Dataset path is: \'" + dataset + "\'")
+usern = 1
 
-################
-# LOAD DATA   ##
-################
+############################
+## LOAD AND PROCESS DATA  ##
+############################
 
 if (dataset == "../Datasets/ml-1m/"):
-	ratings = pd.read_table(dataset + 'ratings.dat', sep='::', 
-		names = ['UserID', 'MovieID', 'Rating', 'Timestamp'], 
-		encoding = 'latin1', engine = 'python')
-	objects = pd.read_table(dataset + 'movies.dat',  sep='::', 
-		names = ['MovieID', 'Title', 'Genres'],  
-		encoding = 'latin1', engine ='python')
-	users = pd.read_table(dataset + 'users.dat',  sep='::', 
-		names = ['UserID', 'Gender', 'Age', 'Occupation', 'Zip'], 
-		encoding = 'latin1', engine = 'python')
-	## For testing pre-processing functions
-	n_objects = 10
-	n_users = 10
-	idx_objects = ratings.MovieID.unique()[:n_objects]
-	idx_users = ratings.UserID.unique()[:n_users]
-	#users.set_index("UserID", inplace=True)
-	#objects.set_index("MovieID", inplace=True)
-	X_users = users.iloc[idx_users, :]
-	X_objects = objects.iloc[idx_objects, :]
-	print(ratings.UserID)
-	print(ratings[ratings.UserID == idx_users[0] and ratings.MovieID == idx_objects[0]])
-	raise ValueError
-	X = ratings.loc[idx_users]
-	X.set_index("MovieID", inplace=True)
-	X = X.loc[idx_objects]
-	print(X.columns)
-	print(X) ##TODO
-
-
-raise ValueError
-
-#######################
-# DATA PREPROCESSING  #
-#######################
-
-## Adapted from M. Pirotti's code for Reinforcement Learning recitation #2
-ratings_count = ratings.groupby(by='MovieID', as_index=True).size()
-# top_ratings = ratings_count.sort_values(ascending=False)[:N]
-top_ratings = ratings_count[ratings_count>=N]
-print(top_ratings.head(10))
+	n_objects = 3706//2
+	rn = dataset + "ratings_u="+str(args.user)+"_no="+str(n_objects)+".dat"
+	un = dataset + "users_u="+str(args.user)+"_no="+str(n_objects)+".dat"
+	on = dataset + "objects_u="+str(args.user)+"_no="+str(n_objects)+".dat"
+	if (not os.path.exists(rn) or not os.path.exists(un) or not os.path.exists(on)):
+		ratings = pd.read_table(dataset + 'ratings.dat', sep='::', 
+			names = ['UserID', 'MovieID', 'Rating', 'Timestamp'], 
+			encoding = 'latin1', engine = 'python')
+		objects = pd.read_table(dataset + 'movies.dat',  sep='::', 
+			names = ['MovieID', 'Title', 'Genres'],  
+			encoding = 'latin1', engine ='python')
+		users = pd.read_table(dataset + 'users.dat',  sep='::', 
+			names = ['UserID', 'Gender', 'Age', 'Occupation', 'Zip'], 
+			encoding = 'latin1', engine = 'python')
+		m = len(ratings.MovieID.unique())
+		n = len(ratings.UserID.unique())
+		n_objects = m//2
+		print("#objects = " + str(m) + " -- #users = " + str(n))
+		id_users = [args.user]
+		X_users = users.loc[users.UserID.isin(id_users)]
+		## Select less than m//2 objects with at least N=1 ratings with the user
+		## to lessen the effect of missing data in the dataset
+		id_objects = ratings.loc[ratings.UserID.isin(id_users)].MovieID.unique()[:n_objects]
+		X_objects = objects.loc[objects.MovieID.isin(id_objects)]
+		X = ratings.loc[ratings.MovieID.isin(id_objects)]
+		X = X.loc[X.UserID.isin(id_users)]
+		print("Dataframes are built")
+		print("|X_objects| = " + str(X_objects.size//3) + " x 3")
+		print("|X_users| = " + str(X_users.size//5) + " x 5")
+		print("|X| = " + str(X.size//4) + " x 4")
+		if (not os.path.exists(rn)):
+			X.to_csv(rn, sep=',')
+		if (not os.path.exists(un)):
+			X_users.to_csv(un, sep=',')
+		if (not os.path.exists(on)):
+			X_objects.to_csv(on, sep=',')
+		print("Done!")
+	else:
+		X = pd.read_csv(rn, sep=',', 
+			names = ['UserID', 'MovieID', 'Rating', 'Timestamp'], 
+			encoding = 'latin1', engine = 'python')
+		X = X.iloc[range(1, X.size//4), :]
+		X_users = pd.read_csv(un, sep=',', 
+			names = ['UserID', 'Gender', 'Age', 'Occupation', 'Zip'], 
+			encoding = 'latin1', engine = 'python')
+		X_users = X_users.iloc[range(1, X_users.size//5), :]
+		X_objects = pd.read_csv(on,  sep=',', 
+			names = ['MovieID', 'Title', 'Genres'],  
+			encoding = 'latin1', engine ='python')
+		X_objects = X_objects.iloc[range(1, X_objects.size//3), :]
 
 #######################
 # BUILD OBJECT GRAPH  #
 #######################
 
-## use Gaussian similarity function: s(x, y) = exp(- ||x-y||²_2/var) with fixed var
+## Building object feature matrix
+if (dataset == "../Datasets/ml-1m/"):
+	fn = dataset + "features_u="+str(args.user)+"_no="+str(n_objects)+".dat"
+	if (not os.path.exists(fn)):
+		## Similarity on movies is using genres
+		genres = X_objects["Genres"]
+		n_obj = genres.size
+		genres = [genres.iloc[i].split('|') for i in range(n_obj)]
+		genres_u = list(set([y for x in genres for y in x]))
+		genres_dict = {k: v for v, k in enumerate(genres_u)}
+		n_genres = len(genres_u)
+		## One-hot encoding of the movie genre
+		features = np.zeros((n_obj, n_genres))
+		for i in range(n_obj):
+			is_present = [genres_dict[g] for g in genres[i]]
+			features[i, np.ix_(is_present)] = 1
+		np.savetxt(fn, features, delimiter=',')
+		print("Done! Shape = " + str(np.shape(features)))
+	else:
+		features = np.loadtxt(fn, delimiter=',')
+
+## Use Gaussian similarity function: s(x, y) = exp(-||x-y||^2_2/var) with fixed var
 ## graph will be an epsilon-neighbourhood 
-## Helper function from TD's (source P. Perrault)
-def build_graph(X, var=1, eps=0.5):
-	dists = sd.squareform(sd.pdist(X, "sqeuclidean"))
-	W = np.exp(-dists / var)
-	W[W < eps] = 0
-	return W
-
-## Helper function from TD's (source P. Perrault)
-def plot_edges_and_points(X, W, title='Object similarity graph'):
-	n = len(X)
-	G=nx.from_numpy_matrix(W)
-	nx.draw_networkx_edges(G,X)
-	for i in range(n):
-		plt.plot(X[i,0], X[i,1], "ro")
-	plt.title(title)
-	plt.axis('equal')
-       
-## Helper function from TD's (source P. Perrault)
-def plot_graph_matrix(X, W):
-	plt.figure()
-	plt.clf()
-	plt.subplot(1,2,1)
-	plot_edges_and_points(X,W)
-	plt.subplot(1,2,2)
-	plt.imshow(W, extent=[0, 1, 0, 1])
-	plt.show() 
-
-W = build_graph(X)
-plot_graph_matrix(X, W)
-
-raise ValueError
-
-# from scipy.linalg import clarkson_woodruff_transform
-from scipy.sparse.linalg import svds
-from sklearn.decomposition import NMF
-
-ratings = pd.read_table('ml-1m/ratings.dat', sep='::', 
-                        names = ['UserID', 'MovieID', 'Rating', 'Timestamp'],
-                        encoding = 'latin1',
-                        engine = 'python')
-movies  = pd.read_table('ml-1m/movies.dat',  sep='::',
-                        names = ['MovieID', 'Title', 'Genres'], 
-                        encoding = 'latin1',
-                        engine ='python')
-users   = pd.read_table('ml-1m/users.dat',  sep='::', 
-                        names = ['UserID', 'Gender', 'Age', 'Occupation', 'Zip'], 
-                        encoding = 'latin1',
-                        engine = 'python')
-
-N = 1000
-ratings_count = ratings.groupby(by='MovieID', as_index=True).size()
-# top_ratings = ratings_count.sort_values(ascending=False)[:N]
-top_ratings = ratings_count[ratings_count>=N]
-top_ratings.head(10)
-
-# movies_topN = movies[movies.MovieID.isin(top_ratings.index)]
-# print('Shape: {}'.format(movies_topN.shape))
-# movies_topN
-ratings_topN = ratings[ratings.MovieID.isin(top_ratings.index)]
-print('Shape: {}'.format(ratings_topN.shape))
-ratings_topN.head(10)
-
-n_users = ratings_topN.UserID.unique().shape[0]
-n_movies = ratings_topN.MovieID.unique().shape[0]
-print('Number of users = {} | Number of movies = {}'.format(n_users, n_movies))
-
-R_df = ratings_topN.pivot(index = 'UserID', columns ='MovieID', values = 'Rating').fillna(0)
-R_df.head()
-
-M = R_df.as_matrix()
-sparsity=round(1.0-np.count_nonzero(M)/float(n_users*n_movies),3)
-print('Number of users = {} | Number of movies = {}'.format(n_users, n_movies))
-print('The sparsity level is {}%'.format(sparsity*100))
-
-K = 30
-
-U, s, Vt = svds(M, k = K)
-s=np.diag(s)
-U = np.dot(U,s)
-print('U: {}'.format(U.shape))
-print('Vt: {}'.format(Vt.shape))
-
-model = NMF(n_components=K, init='random', random_state=0)
-W = model.fit_transform(M)
-H = model.components_
-print('W: {}'.format(W.shape))
-print('H: {}'.format(H.shape))
-
-np.savetxt('U.csv', W, delimiter=',') 
-np.savetxt('Vt.csv', H, delimiter=',') 
+## Helper function from TD's (source: P. Perrault)
+if (dataset == "../Datasets/ml-1m/"):
+	gn = dataset + "graph_u="+str(args.user)+"_no="+str(n_objects)+"_eps="+str(args.eps)+"_k="+str(args.k)+"_var="+str(args.var)+".dat"
+	if (not os.path.exists(gn)):
+		assert args.eps + args.k != 0, "Choose either epsilon graph or k-nn graph"
+		dists = sd.squareform(sd.pdist(features, "sqeuclidean"))
+		W = np.exp(-dists / args.var)
+		## Values between 0 and 1
+		W = W-np.min(W)
+		W = W/np.max(W)
+		if args.eps:
+			W[W < args.eps] = 0
+		elif args.k:
+			sort = np.argsort(W)[:, ::-1]
+			mask = sort[:, args.k + 1:]
+			for i, row in enumerate(mask):
+				W[i, row] = 0
+		## Remove autosimilarity and ensure symmetry
+		np.fill_diagonal(W, 0)
+		W = (W + W.T)/2
+		## Remove weights
+		W[W > 0] = 1
+		np.savetxt(gn, W, delimiter=',')
+		print("Done! Shape = " + str(np.shape(W)))
+		labels = [X_objects["MovieID"].iloc[i] for i in range(X_objects.MovieID.size)]
+		W = pd.DataFrame(W, columns=labels)
+		W.index = labels
+		W.to_csv(gn, sep=',')
+		print("Done!")
+	else:
+		labels = [X_objects["MovieID"].iloc[i] for i in range(X_objects.MovieID.size)]
+		W = pd.read_csv(gn, sep=',', names = labels, 
+			encoding = 'latin1', engine = 'python')
+		W = W.iloc[range(1, W.size//len(labels)), :]
+		## Heatmap
+		## Take subset of 20 samples to make it visible
+		n = min(20, W.size//len(labels))
+		x = W.iloc[range(n), range(n)]
+		ax = sns.heatmap(x, linewidth=0.1, cbar=False)
+		plt.title("Heatmap of the graph matrix")
+		plt.ylabel("Movies")
+		plt.xlabel("movies")
+		plt.show()
