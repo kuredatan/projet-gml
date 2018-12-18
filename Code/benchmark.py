@@ -1,26 +1,36 @@
 # coding: utf-8
 
+## python3.6 benchmark.py --user 2 --eps 0.6 --var 100
+
 import models
 import argparse
 import pandas as pd
 import numpy as np
 import random
+from tqdm import tqdm
 
-random.seed(123456789)
+# For replication
+#random.seed(123456789)
 
 parser = argparse.ArgumentParser(description='Recommender system')
 parser.add_argument('--data', type=str, default='ml-1m', metavar='D',
                     help='folder where data is located.')
 parser.add_argument('--user', type=int, default=1, metavar='U',
                     help='userID to which the object should be recommended.')
-parser.add_argument('--thres', type=float, default=0., metavar='T',
+parser.add_argument('--thres', type=float, default=0., metavar='S',
                     help='serendipity threshold for the recommendation.')
-parser.add_argument('--eps', type=float, default=0.6, metavar='T',
+parser.add_argument('--eps', type=float, default=0.6, metavar='E',
                     help='epsilon threshold to build epsilon neighbourhood similarity graph.')
 parser.add_argument('--k', type=int, default=0, metavar='T',
                     help='k threshold to build k-nn similarity graph.')
-parser.add_argument('--var', type=float, default=100, metavar='T',
+parser.add_argument('--var', type=float, default=100, metavar='V',
                     help='variance value to build similarity graph.')
+parser.add_argument('--method', type=str, default="random", metavar='M',
+                    help='Method for recommender: \"random\", \"lagree\" or \"greedy\".')
+parser.add_argument('--horizon', type=int, default=30, metavar='H',
+                    help='Horizon.')
+parser.add_argument('--niter', type=int, default=10, metavar='N',
+                    help='Number of simulations.')
 args = parser.parse_args()
 
 ##################
@@ -51,17 +61,39 @@ features = np.loadtxt(fn, delimiter=',')
 ## BENCHMARK    ##
 ##################
 
-random_rec = models.Random(X, W, features)
-own_rec = models.Recommender(X, W, features)
+switch = {
+     "random": models.Random(X, W, features),
+     "lagree": models.Recommender(X, W, features),
+     "greedy": models.Greedy(X, W, features),
+}
 
-n_iter = 30
-print("Number of iterations: " + str(n_iter))
-random_rec.reinitialize()
-try:
-	for i in range(n_iter):
-		random_rec.run()
-	random_rec.plot_results()
-except AssertionError:
-	pass
+if (not switch[args.method]):
+	raise ValueError
 
-
+horizon = args.horizon
+n_iter = args.niter
+method_name = args.method
+print("Number of iterations: " + str(n_iter) + ", horizon: " + str(horizon))
+recommender = switch.get(method_name, ValueError)
+regret = np.zeros(horizon)
+volume = np.zeros(horizon)
+nerr = 0
+for _ in tqdm(range(n_iter), "Benchmark " + method_name):
+	recommender.reinitialize()
+	try:
+		for __ in range(horizon):
+			recommender.run(verbose=False)
+		regret += np.array(recommender.regret_arr)
+		volume += np.array(recommender.volume_arr)
+	except AssertionError:
+		print("Assertion error!")
+		nerr += 1
+		pass
+## To smooth the regret curve
+print("There have been " + str(nerr) + " errors.")
+n_iter -= nerr
+regret *= 1/float(n_iter)
+recommender.regret_arr = regret.tolist()
+volume *= 1/float(n_iter)
+recommender.volume_arr = volume.tolist()
+recommender.plot_results()

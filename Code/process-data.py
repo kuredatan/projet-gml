@@ -112,6 +112,17 @@ if (dataset == "../Datasets/ml-1m/"):
 ## Use Gaussian similarity function: s(x, y) = exp(-||x-y||^2_2/var) with fixed var
 ## graph will be an epsilon-neighbourhood 
 ## Helper function from TD's (source: P. Perrault)
+
+## Ensures that the graph is connected
+def is_connected(adj):
+	n = np.shape(adj)[0]
+	adjn=np.zeros((n,n))
+	adji=adj.copy()
+	for i in range(n):
+		adjn+=adji
+		adji=adji.dot(adj)
+	return len(np.where(adjn == 0)[0])==0
+
 if (dataset == "../Datasets/ml-1m/"):
 	gn = dataset + "graph_u="+str(args.user)+"_no="+str(n_objects)+"_eps="+str(args.eps)+"_k="+str(args.k)+"_var="+str(args.var)+".dat"
 	if (not os.path.exists(gn)):
@@ -133,6 +144,7 @@ if (dataset == "../Datasets/ml-1m/"):
 		W = (W + W.T)/2
 		## Remove weights
 		W[W > 0] = 1
+		assert is_connected(W), "Graph is not connected!"
 		np.savetxt(gn, W, delimiter=',')
 		print("Done! Shape = " + str(np.shape(W)))
 		labels = [X_objects["MovieID"].iloc[i] for i in range(X_objects.MovieID.size)]
@@ -145,6 +157,7 @@ if (dataset == "../Datasets/ml-1m/"):
 		W = pd.read_csv(gn, sep=',', names = labels, 
 			encoding = 'latin1', engine = 'python')
 		W = W.iloc[range(1, W.size//len(labels)), :]
+		assert is_connected(W), "Graph is not connected!"
 		## Heatmap
 		## Take subset of 20 samples to make it visible
 		n = min(20, W.size//len(labels))
