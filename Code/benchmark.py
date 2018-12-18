@@ -17,7 +17,7 @@ parser.add_argument('--data', type=str, default='ml-1m', metavar='D',
                     help='folder where data is located.')
 parser.add_argument('--user', type=int, default=1, metavar='U',
                     help='userID to which the object should be recommended.')
-parser.add_argument('--thres', type=float, default=0., metavar='S',
+parser.add_argument('--s', type=int, default=1, metavar='S',
                     help='serendipity threshold for the recommendation.')
 parser.add_argument('--eps', type=float, default=0.6, metavar='E',
                     help='epsilon threshold to build epsilon neighbourhood similarity graph.')
@@ -63,18 +63,18 @@ features = np.loadtxt(fn, delimiter=',')
 
 switch = {
      "random": models.Random(X, W, features),
-     "lagree": models.Recommender(X, W, features),
+     "lagree": models.Recommender(X, W, features, s=1, K=5, N=10),
      "greedy": models.Greedy(X, W, features),
 }
 
-if (not switch[args.method]):
+if (not switch.get(args.method, None)):
 	raise ValueError
 
 horizon = args.horizon
 n_iter = args.niter
 method_name = args.method
 print("Number of iterations: " + str(n_iter) + ", horizon: " + str(horizon))
-recommender = switch.get(method_name, ValueError)
+recommender = switch[method_name]
 regret = np.zeros(horizon)
 volume = np.zeros(horizon)
 nerr = 0
