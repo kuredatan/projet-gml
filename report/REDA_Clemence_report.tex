@@ -32,16 +32,19 @@ TODO
 
 \section{Formalization of the Problem of Recommendation With Serendipity}
 
-Serendipities are objects that are unexpectedly enjoyable. A more formal definition would be, given a serendipity threshold $s$, a unweighted, undirected similarity graph $G(V, E)$ on the objects, and a given user $u$ to which recommendations would be made, serendipities are objects that are located in unexplored (with respect to the considered user) object regions (i.e. strongly connected components of the graph), at distance (in terms of length of the shortest path from explored regions to the considered unexplored region) lesser than t, such that these objects can increase in expectation the diameter of the explored regions of the similarity graph by the user across time. Formally:
+Serendipities are objects that are unexpectedly enjoyable. A more formal definition would be, given a serendipity threshold $s$, a unweighted, undirected similarity graph $G(V, E)$ on the objects, and a given user $u$ to which recommendations would be made, which rating values belong to $\mathscr{R} \subset \mathbb{N}$, serendipities are objects that are located in unexplored (with respect to the considered user) object regions (i.e. strongly connected components of the graph), at distance (in terms of length of the shortest path from explored regions to the considered unexplored region) lesser than t, such that these objects can increase in expectation the diameter of the explored regions of the similarity graph by the user across time. Formally, at time $t$, the set of serendipity objects for user $u$ is as follows:\\
 
-* G(V, E), undirected, unweighted similarity graph on objects
-* u, a user 
-* f-t-u : V -> {0, 1}, a function that indicates exploration of an object by user u (at time t)
-* r-u : V -> [|0, 1, 2|], a function of rating by user u of objects (1 means "not seen", 0 means "don't like", 2 means "like")
-* s, serendipity threshold
-Then we define the set of serendipities at a given point in time t as:
-S = {v in V : v = argmax-{v' in V, v' at distance min. s of an explored region of u} E(sum-{v" in V} [f-{t+1}-u(v")-f-{t}-u(v")]*r-u(v"))}
-(objects which are not in explored regions and give the greatest increase in the diameter of explored regions of the graph, weighted by the known ratings given by the user)
+\begin{equation}
+\begin{split}
+S^{t}_{u} & = argmax_{v \in V, d(v, \text{Support}_{f^{(t)}_{u}}) \leq s} \mathbb{E}(\sum{v' \in V} [f^{t+1}_{u}(v")-f-{t}-u(v")]*r-u(v"))\\
+\end{split}
+\end{equation}
+
+where $f^{(t)}_u : V \rightarrow \{0,1\}$ is a function that indicates exploration of an object by user $u$ (at time $t$), $r_u : V \rightarrow \mathscr{R}$, a function of rating by user $u$ of objects, $d$ is the distance measure used to build $G$ and, for any subset $C$ of objects, $d(., C) = \text{min}_{c \in C} d(., c)$, and $s$ the so-called "serendipity threshold".\\
+
+Intuitively, they can be seen as objects, which are not in already explored regions at time $t$, and which give the greatest increase in the diameter of explored regions of the graph, weighted by the known ratings given by the user $u$.
+
+
 
 where E is the expectation: exploration and rating of a node are drawn from a random distribution: when an object is recommended, we "make" the user explore the recommended node, and this modifies the exploration/rating distributions (if the user has enjoyed the recommended object, they will most likely be willing to explore the neighbours of this object).
 f-u would likely be submodular (a node can be explored only once, thus at a given point in time, the number of explored elements will increase less and less strongly).
