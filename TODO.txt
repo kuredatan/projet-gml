@@ -8,11 +8,16 @@ X Review [Lagrée et al., 2017] + some more references (see file article_review.
 X Formalize the problem of recommendation with serendipity
 X Implement the method suggested in [Lagrée et al., 2017]
 X Get code of [Abbassi et al., 2009]
-- Compare with (baselines and state-of-the-art algorithms) Random, (Spectral) Rotting Bandits, Linear UCB, IMLinUCB (?), Greedy strategies, and other classic methods for recommendation (Netflix challenge, ...)
-- Set up the benchmark pipeline: use DeepMind package for graph neural networks: https://github.com/deepmind/graph_nets 
-- Measures for validation: recommendation and serendipity: can be regret and user global stickiness that should increase + diversity of the recommendation
+X Compare with (baselines and state-of-the-art algorithms) Random, (Spectral) Rotting Bandits, Linear UCB, IMLinUCB (?), Greedy strategies, and other classic methods for recommendation (Netflix challenge, ...)
+X Set up the benchmark pipeline: use DeepMind package for graph neural networks: https://github.com/deepmind/graph_nets 
+X Measures for validation: recommendation and serendipity: can be regret and user global stickiness that should increase + diversity of the recommendation
 X Get MovieLens database
 - Report 5-10 pages in NIPS format (on the top of your report: write the name of your supervisor)
+
+- Je vais essayer de mieux comprendre les résultats que j'ai obtenus
+- Je vais chercher les meilleurs paramètres pour chaque méthode
+- Je vais mettre sous format NIPS et mieux rédiger le brouillon de rapport disponible sur le GitHub
+- Je vais essayer d'implémenter un Rotting Bandit pour comparaison, et d'intégrer l'algorithme de l'article de recsys09 dans le benchmark
 
 ## DEADLINES
 
