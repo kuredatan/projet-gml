@@ -271,10 +271,13 @@ class Recommender(Bandit):
 		W = np.delete(W[candidates, :], candidates, 1)
 		candidates = np.array(candidates)[np.where(np.sum(W, 1) > 0)[0].tolist()].tolist()
 		## K-means + whiten?
-		## Use MiniBatchKMeans when |candidates| is too high
+		## Use MiniBatchKMeans when |F| is too high
 		## Not using centroid graph with Floyd-Warshall TODO
 		F = self.features[candidates, :]
-		km = KMeans(n_clusters=self.K, random_state=0).fit(F)
+		if (np.prod(np.shape(F)) > 500):
+			km = MiniBatchKMeans(n_clusters=self.K, random_state=0).fit(F)
+		else:
+			km = KMeans(n_clusters=self.K, random_state=0).fit(F)
 		centroids = km.cluster_centers_
 		dists = sd.squareform(sd.pdist(np.concatenate((F, centroids), 0), "sqeuclidean"))
 		dists = dists[-self.K:, :-self.K]

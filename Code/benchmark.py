@@ -1,7 +1,5 @@
 # coding: utf-8
 
-## python3.6 benchmark.py --user 2 --eps 0.6 --var 100
-
 import models
 import argparse
 import pandas as pd
@@ -22,9 +20,9 @@ parser.add_argument('--s', type=int, default=1, metavar='S',
                     help='serendipity threshold (>1) for the recommendation.')
 parser.add_argument('--K', type=int, default=5, metavar='K',
                     help='candidate number for the [Lagrée et al.] recommendation.')
-parser.add_argument('--alpha', type=float, default=6, metavar='A',
+parser.add_argument('--alpha', type=float, default=0.1, metavar='A',
                     help='alpha parameter for the LinUCB recommendation.')
-parser.add_argument('--lambda_', type=float, default=1, metavar='L',
+parser.add_argument('--lambda_', type=float, default=0.0001, metavar='L',
                     help='lambda parameter for the LinUCB recommendation.')
 parser.add_argument('--epsilon', type=float, default=0.2, metavar='P',
                     help='epsilon parameter (between 0 and 1) for the epsilon-greedy recommendation.')
@@ -38,9 +36,9 @@ parser.add_argument('--var', type=float, default=100, metavar='V',
                     help='variance value to build similarity graph.')
 parser.add_argument('--method', type=str, default="random", metavar='M',
                     help='Method for recommender: \"random\", \"lagree\" or \"greedy\".')
-parser.add_argument('--horizon', type=int, default=30, metavar='H',
+parser.add_argument('--horizon', type=int, default=100, metavar='H',
                     help='Horizon.')
-parser.add_argument('--niter', type=int, default=10, metavar='N',
+parser.add_argument('--niter', type=int, default=100, metavar='N',
                     help='Number of simulations.')
 args = parser.parse_args()
 

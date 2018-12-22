@@ -1,5 +1,5 @@
 \documentclass{article}
-\usepackage[final]{neurips_2018}
+\usepackage[final]{nips_2018}
 \usepackage[utf8]{inputenc} % allow utf-8 input
 \usepackage[T1]{fontenc}    % use 8-bit T1 fonts
 \usepackage{hyperref}       % hyperlinks
@@ -8,6 +8,12 @@
 \usepackage{amsfonts}       % blackboard math symbols
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
+\usepackage{amsmath}
+\usepackage[mathscr]{euscript}
+
+\DeclareMathOperator*{\argmax}{arg\,max\,}
+\DeclareMathOperator*{\argmin}{arg\,min\,}
+\DeclareMathOperator*{\sumi}{\sum\,}
 
 \title{Recommender system with serendipity}
 \author{
@@ -32,11 +38,11 @@ TODO
 
 \section{Formalization of the Problem of Recommendation With Serendipity}
 
-Serendipities are objects that are unexpectedly enjoyable. A more formal definition would be, given a serendipity threshold $s$, a unweighted, undirected similarity graph $G(V, E)$ on the objects, and a given user $u$ to which recommendations would be made, which rating values belong to $\mathscr{R} \subset \mathbb{N}$, serendipities are objects that are located in unexplored (with respect to the considered user) object regions (i.e. strongly connected components of the graph), at distance (in terms of length of the shortest path from explored regions to the considered unexplored region) lesser than t, such that these objects can increase in expectation the diameter of the explored regions of the similarity graph by the user across time. Formally, at time $t$, the set of serendipity objects for user $u$ is as follows:\\
+Serendipities are objects that are unexpectedly enjoyable. A more formal definition would be, given a serendipity threshold $s$, a unweighted, undirected similarity graph $G(V, E)$ on the objects, and a given user $u$ to which recommendations would be made, which rating values belong to $\mathscr{R} \subset \mathbb{N}$, serendipities are objects that are located in unexplored (with respect to the considered user) object regions (i.e. strongly connected components of the graph), at distance (in terms of length of the shortest path from explored regions to the considered unexplored region) lesser than $t$, such that these objects can increase in expectation the diameter of the explored regions of the similarity graph by the user across time. Formally, at time $t$, the set of serendipity objects for user $u$ is as follows:\\
 
 \begin{equation}
 \begin{split}
-S^{t}_{u} & = argmax_{v \in V, d(v, \text{Support}_{f^{(t)}_{u}}) \leq s} \mathbb{E}(\sum{v' \in V} [f^{t+1}_{u}(v")-f-{t}-u(v")]*r-u(v"))\\
+S^{t}_{u} & = \argmax_{v \in V-\text{Support}(f^{(t)}_{u}), d(v, \text{Support}(f^{(t)}_{u})) \leq s} \mathbb{E}(\sumi{v' \in V} [f^{t+1}_{u}(v")-f_{t}-u(v")]r_{u}(v"))\\
 \end{split}
 \end{equation}
 

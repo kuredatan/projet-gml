@@ -14,8 +14,8 @@ X Measures for validation: recommendation and serendipity: can be regret and use
 X Get MovieLens database
 - Report 5-10 pages in NIPS format (on the top of your report: write the name of your supervisor)
 
-- Je vais essayer de mieux comprendre les résultats que j'ai obtenus
-- Je vais chercher les meilleurs paramètres pour chaque méthode
+X Je vais essayer de mieux comprendre les résultats que j'ai obtenus
+X Je vais chercher les meilleurs paramètres pour chaque méthode
 - Je vais mettre sous format NIPS et mieux rédiger le brouillon de rapport disponible sur le GitHub
 - Je vais essayer d'implémenter un Rotting Bandit pour comparaison, et d'intégrer l'algorithme de l'article de recsys09 dans le benchmark
 
