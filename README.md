@@ -2,7 +2,7 @@
 
 Project for GML class for the MVA. Clémence Réda, 2018. (All rights reserved)
 
-## Project proposition
+## Project proposition
 
 **Name:** Recommender system with serendipity
 
@@ -16,7 +16,19 @@ The goal of this project is to formalize the problem (in particular, the modelli
 
 [1] Abbassi, Z., Amer-Yahia, S., Lakshmanan, L. V., Vassilvitskii, S., & Yu, C. (2009, October). Getting recommender systems to think outside the box. In Proceedings of the third ACM conference on Recommender systems (pp. 285-288). ACM.
 
-## Documentation about the code
+## Code
+
+### Needed modules
+
+If you are using **pip**, you can run:
+
+```bash
+pip install -r requirements.txt
+```
+
+The code was successfully run on **Python 3.6**, and should work (with some warnings) with **Python 2.7**.
+
+### Documentation
 
 The */code* folder contains three **Python** files:
 
@@ -46,4 +58,4 @@ Example of command:
 python3.6 benchmark.py --user 2 --eps 0.6 --var 100 --niter 100 --horizon 100 --method {random|greedy|lagree|linUCB}
 ```
 
-It runs the selected method for *horizon* rounds, and plots the cumulative regret along with the diversity measure for each round (both **averaged** over *niter* trajectories). For the adaptation of the [[Lagrée et al.]]'s method, it also performs the same test, but for several different values of *serendipity threshold*.
+It runs the selected method for *horizon* rounds, and plots the cumulative regret along with the diversity measure for each round (both **averaged** over *niter* trajectories). For the adaptation of the [Lagrée et al.]'s method, it also performs the same test, but for several different values of *serendipity threshold*.

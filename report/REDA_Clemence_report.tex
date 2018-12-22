@@ -9,401 +9,253 @@
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage[mathscr]{euscript}
+\usepackage{algorithm}
+\usepackage{float}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{calc}
+\usepackage{natbib}
+\usepackage{subfigure}
+\newlength{\depthofsumsign}
+\setlength{\depthofsumsign}{\depthof{$\sum$}}
+\newlength{\totalheightofsumsign}
+\newlength{\heightanddepthofargument}
 
 \DeclareMathOperator*{\argmax}{arg\,max\,}
 \DeclareMathOperator*{\argmin}{arg\,min\,}
-\DeclareMathOperator*{\sumi}{\sum\,}
 
 \title{Recommender system with serendipity}
 \author{
   Cl\'{e}mence~R\'{e}da\\
-  supervised by Claire~Vernade\\
+  \'{E}cole Normale Supérieure~Paris-Saclay\\
+  supervised by Claire Vernade\\
 }
 
 
 \begin{document}
-\nocite{*}
+%\nocite{*}
 
 \maketitle
 
 \begin{abstract}
-A lacking feature of current recommender systems is that they usually do not allow discovery of new elements, that is, an element that might be interesting, but which is different of what the user is used to. Moreover, a clear definition of serendipity is missing. The goal of this project was (1) to formalize the problem of recommendation allowing serendipities, that is, surprisingly good discoveries; (2) to design a method which solves this problem in an online setting; (3) to evaluate its relevance with respect to the random strategy, usual collaborative filtering recommender system, and methods using Rotting Bandits.
+A lacking feature of current recommender systems is that they usually do not allow discovery of new elements, that is, an element that might be interesting, but which is different of what the user is \textit{used to}. This feature is subject to active research in the domain since 2001, because diversity of recommendation (in a general sense) might be useful in order to avoid overfitting or bias, or boredom of the user. Although the subject of diversity/discovery/... in recommender systems is not new, to the best of my knowledge, there is no formal definition of \textit{serendipity} (that is, a surprisingly good discovery) in the context of recommender systems. The goal of this project was (1) to formalize the problem of recommendation allowing serendipities; (2) to design a method which solves this problem in an online setting; (3) to evaluate its relevance with respect to naive and classic bandit models.
 \end{abstract}
 
-\section{Introduction And Review of the State-of-the-Art}
+\section{Introduction}
 
-%% TODO
-TODO
+Recommender systems have a wide range of applications, from e-commerce (\cite{smith2017two}) to educational data mining (\cite{tang2003smart}). This may account for the high research activity in this field since the early 1980s, and many sorts of methods were developed (see \cite{adomavicius2005toward} for a comprehensive survey of early algorithms). Many researchers (\cite{abbassi2009getting,kunaver2017diversity,zhou2010solving}) have already stressed the difference between \textit{accurate} recommendations (that is, the user actually enjoys the recommended item, and buys it or rates it positively), and \textit{useful} recommendations (recommended items which are novelties, discoveries to the user things that they would never had found themselves). If a recommender system for e-commerce suggests popular items, for instance, most of the users might buy them, but, on the one hand, more obscure books, for instance, might be ignored, thus might never be sold, even if there are users who would be interested in buying them; on the other hand, there might be a drop in sales once the fad for a given item is over, or when most of the customers had already acquired it. The need for diversification of recommender systems is thus strong, and has been a subject of research since 2001 (\cite{bradley2001improving}) (see \cite{kunaver2017diversity} for a recent survey of this sub-field).
 
-\section{Formalization of the Problem of Recommendation With Serendipity}
+This "diversity-accuracy dilemma of recommender systems" (\cite{zhou2010solving}) bears more than a passing resemblance to the exploration-exploitation dilemma that is notably observed in the multi-armed bandit problem (\cite{auer2002finite}). In this project, we will adapt a multi-armed bandit method for Online Influence Maximization to the problem of recommendation with serendipity, and analyze the results with respect to accuracy and diversity.
 
-Serendipities are objects that are unexpectedly enjoyable. A more formal definition would be, given a serendipity threshold $s$, a unweighted, undirected similarity graph $G(V, E)$ on the objects, and a given user $u$ to which recommendations would be made, which rating values belong to $\mathscr{R} \subset \mathbb{N}$, serendipities are objects that are located in unexplored (with respect to the considered user) object regions (i.e. strongly connected components of the graph), at distance (in terms of length of the shortest path from explored regions to the considered unexplored region) lesser than $t$, such that these objects can increase in expectation the diameter of the explored regions of the similarity graph by the user across time. Formally, at time $t$, the set of serendipity objects for user $u$ is as follows:\\
+\section{Problem of Recommendation With Serendipity}
+
+Serendipities are objects that are unexpectedly enjoyable. Two users' reaction to a same recommended item can be poles apart. Thus the difference between serendipity and diversity (\cite{abbassi2009getting}) should be emphasized: diversity is meant to be strictly about recommended object dissimilarity, whereas the notion of serendipity also implicitly depends on the user's past behaviour. More formally, diversity can be quantified by the following measure (\cite{vie2016modeles}):
 
 \begin{equation}
 \begin{split}
-S^{t}_{u} & = \argmax_{v \in V-\text{Support}(f^{(t)}_{u}), d(v, \text{Support}(f^{(t)}_{u})) \leq s} \mathbb{E}(\sumi{v' \in V} [f^{t+1}_{u}(v")-f_{t}-u(v")]r_{u}(v"))\\
+D(V^{(t)}) & = \sqrt{|V^{(t)}.t(V^{(t)})|}\\
+& \mbox{(where $t$ is the number of rounds, $V^{(t)}$ is the matrix which lines are the feature vectors}\\
+& \mbox{of explored objects up to time $t$, and $t(V^{(t)})$ its transpose matrix)}\\
 \end{split}
 \end{equation}
 
-where $f^{(t)}_u : V \rightarrow \{0,1\}$ is a function that indicates exploration of an object by user $u$ (at time $t$), $r_u : V \rightarrow \mathscr{R}$, a function of rating by user $u$ of objects, $d$ is the distance measure used to build $G$ and, for any subset $C$ of objects, $d(., C) = \text{min}_{c \in C} d(., c)$, and $s$ the so-called "serendipity threshold".\\
+\citet{abbassi2009getting} suggests a definition for $\mathscr{O}\mathscr{B}\mathscr{T}$-ness (\textit{outside-the-box} recommendations), which seems to be an equivalent of the definition of serendipity described above. It relies on a mixture of object and user similarity, and needs offline, fully built user and object similarity networks, along with a few custom parameters which meanings are not straightforward to grasp.
 
-Intuitively, they can be seen as objects, which are not in already explored regions at time $t$, and which give the greatest increase in the diameter of explored regions of the graph, weighted by the known ratings given by the user $u$.
+I suggest a definition of serendipity which only relies on:
+\begin{enumerate} 
+\item the unweighted, undirected object similarity graph, denoted $\mathscr{G}(V, E)$, which is accessible and computable at start time, for in the recommender setting the set of objects is fixed and their feature vectors are known.
+\item a \textit{serendipity threshold}, denoted $s$, which quantifies the risk run in order to surprise the user (the higher it is, the more regions of the object graph are available for recommendation).
+\item the past behaviour (in terms of exploration and reward) of the user $u$ the algorithm makes recommendations to, denoted $(f_{u}, r_{u})$ (I assume I never have to cope with a cold start case, which seems relevant with respect to the fact I can still ask the user a few ratings/rewards on some movies in order to "initialize" its behaviour). $f^{(t)}_u : V \rightarrow \{0,1\}$ is a random vector that indicates exploration of an object by user $u$ (at time $t$) (thus the notion of \textit{support}, that is, the domain on which $f^{(t)}_{u}$ is positive (denoted Supp($f^{(t)}_{u}$)), is well-defined). $r_u : V \rightarrow \mathscr{R} \subset \mathbb{N}$, a random vector of reward by user $u$ of objects in $\mathscr{G}$. The definition does not assume any prior on the vectors $(f_{u}, r_{u})$, but that I have only access to noisy observations of the rewards and (future) exploration of objects by user $u$, and that, for any given $t$, $(f^{(t)}_{u}, r^{(t)}_{u})$ only depends on the past behaviour of user $u$, i.e. on $(f^{(0)}_{u}, r^{(0)}_{u}), (f^{(1)}_{u}, r^{(1)}_{u}), ..., (f^{(t-1)}_{u}, r^{(t-1)}_{u})$. Here, the user features are implicitly described by the distribution of the user behaviour. Note that $(f^{(0)}_{u}, r^{(0)}_{u})$ can be set using the starting ratings.
+\end{enumerate}
 
+The set of potential serendipities at time $t$ for user $u$ (with threshold $s$) is denoted $\mathscr{S}^{(t)}_{u,s}$ and described as follows:
 
+\begin{equation}
+\begin{split}
+\mathscr{S}^{(t)}_{u,s} & = \argmax_{\substack{v \in V-\text{Supp}(f^{(t)}_{u})\\d(v, \text{Supp}(f^{(t)}_{u})) \leq s}} \mathbb{E}_{(f_{u},r_{u})}[ \sum_{v' \in V} [f^{t+1}_{u}(v")-f_{t}-u(v")]r_{u}(v") ]\\ %TODO
+\end{split}
+\end{equation}
+
+where , , $d$ is the distance measure used to build $G$ and, for any subset $C$ of objects, $d(., C) = \text{min}_{c \in C} d(., c)$, and $s$ the so-called "serendipity threshold".\\
+
+Intuitively, they can be seen as objects, which are not in already explored regions at time $t$ (i.e. in set $V - \text{Supp}(f^{(t)}_{u})$), and which give the greatest increase in the diameter/support of explored regions of the graph, weighted by the known ratings given by the user $u$.
+
+No assumptions made on past behaviour and ratings. But not computable. More general than the previous definition. ratings may depend on user similarity!!
 
 where E is the expectation: exploration and rating of a node are drawn from a random distribution: when an object is recommended, we "make" the user explore the recommended node, and this modifies the exploration/rating distributions (if the user has enjoyed the recommended object, they will most likely be willing to explore the neighbours of this object).
 f-u would likely be submodular (a node can be explored only once, thus at a given point in time, the number of explored elements will increase less and less strongly).
 
-\section{Method}
+\section{Solving the Problem of Recommendation With Serendipity}
 
-The idea would be to use the OIMP (Online Influence Maximization with Persistence) method developped in [Lagrée et al., 2017]. The concept of restricting the set of candidates to a number K of objects (with their supports) might suit the idea to restrict recommendations to non-explored suitable regions:
+Intuitively, what I want is to increase as fast as possible the support of $f_{u}$ while maximizing the expected rewards of objects in the support. This problem remotely looks like Influence Maximization -I want to select the candidates which will give the highest expected spread, the notion of spread here being the expected reward of unexplored neighbours of each candidate. In order to solve the problem in an online setting, I have adapted the method in \cite{lagree2017effective}. \footnote{The idea of seeing the problem of recommendation with serendipity as an influence maximization problem, and adapting the method in \cite{lagree2017effective} is Claire Vernade's. I have designed the adaptation of the method to recommendation with serendipity and implemented it.} The concept of restricting the set of candidates to a number $K$ of objects (with their "supports", i.e. their direct neighbours in the graph) might suit the idea to restrict recommendations to unexplored suitable regions (see Algorithm \ref{candidates} for the candidate selection, and Algorithm \ref{lagree} for the recommender system). For any matrix $A$, $A[a, b]$ means the submatrix restricted to indices/elements in sets $a$ (row) and $b$ (column), with possibly $a$ or $b$ reduced to a single element.
 
-For a given user u, a fixed parameter K (number of candidates)
-For each round 1 up to a finite horizon T
-	Compute the set of relevant candidates c-1, ..., c-k with their support A-1, ..., A-k (*)
-	Compute a score of relevance for each candidate
-	Select the (1) candidate with the highest score
-	Observe reward r (rating of the recommended object by user u)
-	Write the associated regret: real best candidate reward (among the k selected candidates) - r
-	Improve the algorithm: update statistics accordingly for score computation
-Return cumulative regret up to horizon T for comparison with other methods
-In order to check the serendipity part, we can also keep track of the exploration of each object region: if the recommendation has succeeded in increasing the exploration of the user, the exploration of each region should increase: a mean to quantify this is to compute the volume of the parallelotope which relies on explored (by user u) objects o-1, o-2, ..., o-n as follows: V = (o-1, ..., o-n) and Vol(o-1, ..., o-n) = sqrt(det(V*V-T)) . This volume should increase more for recommendation with serendipity than for regular recommendation, because recommended objects are supposed to be less correlated (similar). [1]
+\begin{algorithm}
+\begin{algorithmic}
+\STATE \textbf{Name} candidate\_selection
+\STATE \textbf{Input} $K$: number of candidates in which the recommended item should be selected, $s$: serendipity threshold, $W$: (unweighted, undirected) similarity graph matrix, $n$: total number of objects, $f$: number of features, $F$: object feature matrix of size $n \times f$.
+\STATE \textbf{Output} $\text{candidates}$ the set of candidate nodes for recommendation, and $\text{supports}$ the set of neighbouring unexplored nodes for each candidate.
+\STATE - $S \leftarrow \text{Supp}(f^{(t)}_{u}) \cap \{c \in V : \exists i, 1 \leq i \leq s, W^{i}[c, \text{Supp}(f^{(t)}_{u})]\textbf{1} > 0 \}$
+\STATE - $\text{centroids} \leftarrow \text{Kmeans}(\text{data}=F[S,:],\text{nclusters}=K)$
+\STATE - $\text{candidates} \leftarrow \emptyset$
+\FOR{$c \in \text{centroids}$}
+\STATE - Append $\argmin_{\substack{v \in S}} ||F[v, :]-F[c, :]||^{2}_2$ to $\text{candidates}$
+\ENDFOR
+\STATE - $\text{supports} \leftarrow \emptyset$
+\FOR{$v \in \text{candidates}$}
+\STATE - Append $\{v' \in S : W[v,v'] > 0\}$ to $\text{supports}$
+\ENDFOR
+\end{algorithmic}
+\caption{Candidate selection}
+\label{candidates}
+\end{algorithm}
 
-The goal of this algorithm is then to infer the real edge weights (which corresponds, for an edge (i, j), to the probability of user u liking object i (j) knowing its rating of object j (i)) in an online setting.
+The candidate selection problem is hard. \citet{lagree2017effective} suggest getting the nodes with the highest degree, or using Max-Cover to find plausible candidates. My idea is to implement serendipity at this point of the method: at time $t$, I apply $K$-means (\emph{a priori}, any clustering method would be fine, as far as I know) to the set of unexplored elements in the graph at distance lesser than $s$ from the support of $f^{(t)}_{u}$, and, for each computed centroid, I select the closest unexplored existing node (in terms of L2-norm) to this centroid. I have used the fact that $W$ is an adjacency matrix for an unweighted, undirected graph, thus, for any integer $k$ and coordinates $i, j$, $W^{k}[i,j]$ is the number of walks (possibly with repeated edges) of length $k$ between nodes $i$ and $j$. It is implicitly assumed that the number of centroid nodes will be far lesser than the number of nodes in the object graph. 
 
-(*) This is a difficult problem. Lagrée et al. suggest Max-degree or Cover as general strategies to find plausible candidates. One idea is to implement serendipity at this point of the bandit algorithm: select 1 "centroid" (either by K-means, or by Max-degree) in each unexplored object region at distance at least s from the explored regions.
-
-Another issue is the missing data in most of the datasets (MovieLens included). We can restrict movies to objects having a minimal number of ratings, and, for each movie, the reward is a noisy observation of the empirical mean of the ratings in the dataset (using multinomial or Gaussian distributions): "semi-simulated data".
-
-We implicitly assume that the number of "centroids" will be far lesser than the number of nodes in the object graph. When computing the regret, we also assume that the best "arm" we could use is among the K selected candidates, thus that we do not question the method with which we select the candidates, which is an hypothesis made in the [Lagrée et al., 2017] article.
+\begin{algorithm}
+\begin{algorithmic}
+\STATE \textbf{Name} recommend
+\STATE \textbf{Input} $N$: the time budget to evaluate which item should be recommended among the candidates, $\text{candidates}, \text{supports}$ the output of function $\text{candidate\_selection}$.
+\STATE \textbf{Output} $a$ the recommended item.
+\STATE - Apply \cite{lagree2017effective}'s method on $\text{candidates}, \text{supports}$ for $N$ rounds, and compute the spread of each candidate by sampling the reward of each element in its support.
+\STATE - $a$ is the candidate which maximizes the "candidate score" computed in (\cite{lagree2017effective}) at round $N$.
+\end{algorithmic}
+\caption{Adaptation of \cite{lagree2017effective}'s algorithm for Influence Maximization.}
+\label{lagree}
+\end{algorithm}
 
 \section{Experiments}
 
-Comparison with Random strategy, if time permits, with Rotting Bandits and Linear UCB. Horizon T = 1,000. Comparison of the expected cumulative regret and evolution of volume up to horizon T.
+I have compared the adaptation of the method described above with LinUCB (described in \cite{chu2011contextual}), a completely random strategy (see Algorithm \ref{random}), and an $\epsilon$-greedy strategy (see Algorithm \ref{greedy}) on the dataset $\text{ml-1m}$ of MovieLens. 
 
-%TODO Random, Rotting Bandits, Collaborative Filtering recommender
+First, I have selected all ratings associated with the input username, and restricted the benchmark to the movies rated at least once by the user (to avoid the issue of missing data).
 
-\section{Discussion}
+Then, I have computed the object feature matrix $F$ as a one-hot encoding of the movie genres for each object (i.e. were a movie $i$ to be classified as "Romance" and "Comedy", and the available labels be "Romance", "Comedy", "Thriller", "Drama" -in this order- the resulting feature line $F[i, :]$ would be $1100$).Then I have built the $\text{eps}$-neighbourhood with parameter $\sigma$: first, I have computed the similarity matrix $S$ such that, for two objects $i,j$, $S(i,j) = \text{exp}(\frac{-||F[i,:]-F[j,:]||^{2}_{2}}{\sigma^{2}})$, and then I have used $S$ to built the adjacency matrix $W$ of the unweighted, undirected similarity graph such that, for two objects $i, j$:
 
-%TODO
+\begin{equation}
+\begin{split}
+W[i, j] & = 1 \mbox{ if $S(i,j) > \text{eps}$}\\
+& = 0 \mbox{ otherwise}\\ 
+\end{split}
+\end{equation}
 
-NeurIPS requires electronic submissions.  The electronic submission site is
-\begin{center}
-  \url{https://cmt.research.microsoft.com/NeurIPS2018/}
-\end{center}
+I have checked that the provided values for $\text{eps}$ and $\sigma^{2}$ had resulted in a connected graph (to avoid having a pair of movies being at infinite distance from each other).
 
-Please read the instructions below carefully and follow them faithfully.
+The two measures I have used to compare the different bandit models are:
+\begin{enumerate}
+\item The cumulative regret, which is defined as follows at time $T$:
 
-\subsection{Style}
+\begin{equation}
+\begin{split}
+R_{T} & = \\ 
+\end{split}
+\end{equation}
 
-Papers to be submitted to NeurIPS 2018 must be prepared according to the
-instructions presented here. Papers may only be up to eight pages long,
-including figures. Additional pages \emph{containing only acknowledgments and/or
-  cited references} are allowed. Papers that exceed eight pages of content
-(ignoring references) will not be reviewed, or in any other way considered for
-presentation at the conference.
+When computing the regret, we also assume that the best "arm" we could use is among the K selected candidates, thus that we do not question the method with which we select the candidates, which is an hypothesis made in the [Lagrée et al., 2017] article.
 
-The margins in 2018 are the same as since 2007, which allow for $\sim$$15\%$
-more words in the paper compared to earlier years.
+\item 
 
-Authors are required to use the NeurIPS \LaTeX{} style files obtainable at the
-NeurIPS website as indicated below. Please make sure you use the current files
-and not previous versions. Tweaking the style files may be grounds for
-rejection.
+This volume should increase more for recommendation with serendipity than for regular recommendation, because recommended objects are supposed to be less correlated.
 
-\subsection{Retrieval of style files}
+\end{enumerate}
 
-The style files for NeurIPS and other conference information are available on
-the World Wide Web at
-\begin{center}
-  \url{http://www.neurips.cc/}
-\end{center}
-The file \verb+neurips_2018.pdf+ contains these instructions and illustrates the
-various formatting requirements your NeurIPS paper must satisfy.
+Both of these measures are actually averaged across $n\_iter$ trajectories.
 
-The only supported style file for NeurIPS 2018 is \verb+neurips_2018.sty+,
-rewritten for \LaTeXe{}.  \textbf{Previous style files for \LaTeX{} 2.09,
-  Microsoft Word, and RTF are no longer supported!}
+%TODO use Monte-Carlo estimate in the benchmark
 
-The \LaTeX{} style file contains three optional arguments: \verb+final+, which
-creates a camera-ready copy, \verb+preprint+, which creates a preprint for
-submission to, e.g., arXiv, and \verb+nonatbib+, which will not load the
-\verb+natbib+ package for you in case of package clash.
+\begin{algorithm}
+\begin{algorithmic}
+\STATE \textbf{Name} recommend\_random
+\STATE \textbf{Input} $n$: number of objects.
+\STATE \textbf{Output} $a$ the recommended item.
+\STATE - $a \thicksim \mathscr{U}(\{1, 2, ..., n-1, n\})$ (uniform distribution on a discrete set of size $n$).
+\end{algorithmic}
+\caption{Random strategy.}
+\label{random}
+\end{algorithm}
 
-\paragraph{New preprint option for 2018}
-If you wish to post a preprint of your work online, e.g., on arXiv, using the
-NeurIPS style, please use the \verb+preprint+ option. This will create a
-nonanonymized version of your work with the text ``Preprint. Work in progress.''
-in the footer. This version may be distributed as you see fit. Please \textbf{do
-  not} use the \verb+final+ option, which should \textbf{only} be used for
-papers accepted to NeurIPS.
+\begin{algorithm}
+\begin{algorithmic}
+\STATE \textbf{Name} recommend\_greedy
+\STATE \textbf{Input} $n$: number of objects, $\epsilon$ the probability of playing the random strategy.
+\STATE \textbf{Output} $a$ the recommended item.
+\STATE - Draw $e \thicksim \mathscr{B}(\epsilon)$ (Bernouilli distribution of parameter $\epsilon$).
+\IF{$e = 1$}
+\STATE - $a \thicksim \mathscr{U}(\{1, 2, ..., n-1, n\})$
+\ELSE
+\STATE - $a = \argmax_{b \in V-\text{Supp}(f^{(t)}_{u})} D(V^{t-1}, F[b, :])$ (diversity measure where the feature vector of $b$ is added as the $t^{th}$ line of the observed feature matrix).
+\ENDIF
+\end{algorithmic}
+\caption{$\epsilon$-greedy strategy.}
+\label{greedy}
+\end{algorithm}
 
-At submission time, please omit the \verb+final+ and \verb+preprint+
-options. This will anonymize your submission and add line numbers to aid
-review. Please do \emph{not} refer to these line numbers in your paper as they
-will be removed during generation of camera-ready copies.
-
-The file \verb+neurips_2018.tex+ may be used as a ``shell'' for writing your
-paper. All you have to do is replace the author, title, abstract, and text of
-the paper with your own.
-
-The formatting instructions contained in these style files are summarized in
-Sections \ref{gen_inst}, \ref{headings}, and \ref{others} below.
-
-\section{General formatting instructions}
-\label{gen_inst}
-
-The text must be confined within a rectangle 5.5~inches (33~picas) wide and
-9~inches (54~picas) long. The left margin is 1.5~inch (9~picas).  Use 10~point
-type with a vertical spacing (leading) of 11~points.  Times New Roman is the
-preferred typeface throughout, and will be selected for you by default.
-Paragraphs are separated by \nicefrac{1}{2}~line space (5.5 points), with no
-indentation.
-
-The paper title should be 17~point, initial caps/lower case, bold, centered
-between two horizontal rules. The top rule should be 4~points thick and the
-bottom rule should be 1~point thick. Allow \nicefrac{1}{4}~inch space above and
-below the title to rules. All pages should start at 1~inch (6~picas) from the
-top of the page.
-
-For the final version, authors' names are set in boldface, and each name is
-centered above the corresponding address. The lead author's name is to be listed
-first (left-most), and the co-authors' names (if different address) are set to
-follow. If there is only one co-author, list both author and co-author side by
-side.
-
-Please pay special attention to the instructions in Section \ref{others}
-regarding figures, tables, acknowledgments, and references.
-
-\section{Headings: first level}
-\label{headings}
-
-All headings should be lower case (except for first word and proper nouns),
-flush left, and bold.
-
-First-level headings should be in 12-point type.
-
-\subsection{Headings: second level}
-
-Second-level headings should be in 10-point type.
-
-\subsubsection{Headings: third level}
-
-Third-level headings should be in 10-point type.
-
-\paragraph{Paragraphs}
-
-There is also a \verb+\paragraph+ command available, which sets the heading in
-bold, flush left, and inline with the text, with the heading followed by 1\,em
-of space.
-
-\section{Citations, figures, tables, references}
-\label{others}
-
-These instructions apply to everyone.
-
-\subsection{Citations within the text}
-
-The \verb+natbib+ package will be loaded for you by default.  Citations may be
-author/year or numeric, as long as you maintain internal consistency.  As to the
-format of the references themselves, any style is acceptable as long as it is
-used consistently.
-
-The documentation for \verb+natbib+ may be found at
-\begin{center}
-  \url{http://mirrors.ctan.org/macros/latex/contrib/natbib/natnotes.pdf}
-\end{center}
-Of note is the command \verb+\citet+, which produces citations appropriate for
-use in inline text.  For example,
-\begin{verbatim}
-   \citet{hasselmo} investigated\dots
-\end{verbatim}
-produces
-\begin{quote}
-  Hasselmo, et al.\ (1995) investigated\dots
-\end{quote}
-
-If you wish to load the \verb+natbib+ package with options, you may add the
-following before loading the \verb+neurips_2018+ package:
-\begin{verbatim}
-   \PassOptionsToPackage{options}{natbib}
-\end{verbatim}
-
-If \verb+natbib+ clashes with another package you load, you can add the optional
-argument \verb+nonatbib+ when loading the style file:
-\begin{verbatim}
-   \usepackage[nonatbib]{neurips_2018}
-\end{verbatim}
-
-As submission is double blind, refer to your own published work in the third
-person. That is, use ``In the previous work of Jones et al.\ [4],'' not ``In our
-previous work [4].'' If you cite your other papers that are not widely available
-(e.g., a journal paper under review), use anonymous author names in the
-citation, e.g., an author of the form ``A.\ Anonymous.''
-
-\subsection{Footnotes}
-
-Footnotes should be used sparingly.  If you do require a footnote, indicate
-footnotes with a number\footnote{Sample of the first footnote.} in the
-text. Place the footnotes at the bottom of the page on which they appear.
-Precede the footnote with a horizontal rule of 2~inches (12~picas).
-
-Note that footnotes are properly typeset \emph{after} punctuation
-marks.\footnote{As in this example.}
-
-\subsection{Figures}
-
-\begin{figure}
+\begin{figure}[H]
   \centering
-  \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-  \caption{Sample figure caption.}
+  \rule[-.5cm]{0cm}{4cm}
+  \includegraphics[scale=0.5]{../Results/random_4min40sec.png}
+  \rule[-.5cm]{4cm}{0cm}
+  \caption{[Random strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
 \end{figure}
 
-All artwork must be neat, clean, and legible. Lines should be dark enough for
-purposes of reproduction. The figure number and caption always appear after the
-figure. Place one line space before the figure caption and one line space after
-the figure. The figure caption should be lower case (except for first word and
-proper nouns); figures are numbered consecutively.
+\begin{figure}[H]
+  \centering
+  \rule[-.5cm]{0cm}{4cm}
+  \includegraphics[scale=0.5]{../Results/greedy_51min6sec.png}
+  \rule[-.5cm]{4cm}{0cm}
+  \caption{[$\epsilon$-greedy strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $\epsilon=0.2$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\end{figure}
 
-You may use color figures.  However, it is best for the figure captions and the
-paper body to be legible if the paper is printed in either black/white or in
-color.
+\begin{figure}[H]
+  \centering
+  \rule[-.5cm]{0cm}{4cm}
+  \includegraphics[scale=0.5]{../Results/linUCB_6min4sec.png}
+  \rule[-.5cm]{4cm}{0cm}
+  \caption{[LinUCB strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $\alpha=0.1$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\end{figure}
 
-\subsection{Tables}
+\begin{figure}[H]
+  \centering
+  \rule[-.5cm]{0cm}{4cm}
+  \includegraphics[scale=0.5]{../Results/lagree_36min16sec.png}
+  \rule[-.5cm]{4cm}{0cm}
+  \caption{[Adapted method strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $K=5, s=1, N=10$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\end{figure}
 
-All tables must be centered, neat, clean and legible.  The table number and
-title always appear before the table.  See Table~\ref{sample-table}.
+\begin{figure}[H]
+  \centering
+  \rule[-.5cm]{0cm}{4cm}
+  \includegraphics[scale=0.5]{../Results/lagree.png}
+  \rule[-.5cm]{4cm}{0cm}
+  \caption{[Adapted method strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $K=5, N=10$ with varying parameter $s=1, 2, 3, 4, 5$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\end{figure}
 
-Place one line space before the table title, one line space after the
-table title, and one line space after the table. The table title must
-be lower case (except for first word and proper nouns); tables are
-numbered consecutively.
-
-Note that publication-quality tables \emph{do not contain vertical rules.} We
-strongly suggest the use of the \verb+booktabs+ package, which allows for
-typesetting high-quality, professional tables:
-\begin{center}
-  \url{https://www.ctan.org/pkg/booktabs}
-\end{center}
-This package was used to typeset Table~\ref{sample-table}.
-
-\begin{table}
-  \caption{Sample table title}
-  \label{sample-table}
+\begin{table}[H]
+  \caption{Run times for $n\_iter=100$, horizon $T=100$ for each method.}
+  \label{runtimes}
   \centering
   \begin{tabular}{lll}
-    \toprule
-    \multicolumn{2}{c}{Part}                   \\
+    \multicolumn{2}{c}{}                   \\
     \cmidrule(r){1-2}
-    Name     & Description     & Size ($\mu$m) \\
+    Method     & Run time    \\
     \midrule
-    Dendrite & Input terminal  & $\sim$100     \\
-    Axon     & Output terminal & $\sim$10      \\
-    Soma     & Cell body       & up to $10^6$  \\
+    random & 4 min. 40 sec.  \\
+    $\epsilon$-greedy & 51 min. 6 sec.  \\
+    LinUCB     & 6 min. 4 sec. \\
+    Adapted method     & 36 min. 16 sec.       \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\section{Final instructions}
+Note that the runtimes listed in Table \ref{runtimes} use Python implementations of each bandit model; coding them in C++ instead would have probably made everything faster. The code itself is not really optimized either, and this may account for the slowness of $\epsilon$-greedy and the adapted method.
 
-Do not change any aspects of the formatting parameters in the style files.  In
-particular, do not modify the width or length of the rectangle the text should
-fit into, and do not change font sizes (except perhaps in the
-\textbf{References} section; see below). Please note that pages should be
-numbered.
-
-\section{Preparing PDF files}
-
-Please prepare submission files with paper size ``US Letter,'' and not, for
-example, ``A4.''
-
-Fonts were the main cause of problems in the past years. Your PDF file must only
-contain Type 1 or Embedded TrueType fonts. Here are a few instructions to
-achieve this.
-
-\begin{itemize}
-
-\item You should directly generate PDF files using \verb+pdflatex+.
-
-\item You can check which fonts a PDF files uses.  In Acrobat Reader, select the
-  menu Files$>$Document Properties$>$Fonts and select Show All Fonts. You can
-  also use the program \verb+pdffonts+ which comes with \verb+xpdf+ and is
-  available out-of-the-box on most Linux machines.
-
-\item The IEEE has recommendations for generating PDF files whose fonts are also
-  acceptable for NeurIPS. Please see
-  \url{http://www.emfield.org/icuwb2010/downloads/IEEE-PDF-SpecV32.pdf}
-
-\item \verb+xfig+ "patterned" shapes are implemented with bitmap fonts.  Use
-  "solid" shapes instead.
-
-\item The \verb+\bbold+ package almost always uses bitmap fonts.  You should use
-  the equivalent AMS Fonts:
-\begin{verbatim}
-   \usepackage{amsfonts}
-\end{verbatim}
-followed by, e.g., \verb+\mathbb{R}+, \verb+\mathbb{N}+, or \verb+\mathbb{C}+
-for $\mathbb{R}$, $\mathbb{N}$ or $\mathbb{C}$.  You can also use the following
-workaround for reals, natural and complex:
-\begin{verbatim}
-   \newcommand{\RR}{I\!\!R} %real numbers
-   \newcommand{\Nat}{I\!\!N} %natural numbers
-   \newcommand{\CC}{I\!\!\!\!C} %complex numbers
-\end{verbatim}
-Note that \verb+amsfonts+ is automatically loaded by the \verb+amssymb+ package.
-
-\end{itemize}
-
-If your file contains type 3 fonts or non embedded TrueType fonts, we will ask
-you to fix it.
-
-\subsection{Margins in \LaTeX{}}
-
-Most of the margin problems come from figures positioned by hand using
-\verb+\special+ or other commands. We suggest using the command
-\verb+\includegraphics+ from the \verb+graphicx+ package. Always specify the
-figure width as a multiple of the line width as in the example below:
-\begin{verbatim}
-   \usepackage[pdftex]{graphicx} ...
-   \includegraphics[width=0.8\linewidth]{myfile.pdf}
-\end{verbatim}
-See Section 4.4 in the graphics bundle documentation
-(\url{http://mirrors.ctan.org/macros/latex/required/graphics/grfguide.pdf})
-
-A number of width problems arise when \LaTeX{} cannot properly hyphenate a
-line. Please give LaTeX hyphenation hints using the \verb+\-+ command when
-necessary.
+\section{Discussion}
 
 %\subsubsection*{Acknowledgments} TODO
+%Many thanks to Claire Vernade for mentoring me.
 
-\bibliographystyle{unsrt}
+\bibliographystyle{plainnat}
 \bibliography{biblio}
-
-%4-6 pages
-%There is also a \verb+\paragraph+ command available, which sets the heading in bold, flush left, and inline with the text, with the heading followed by 1\,em of space.
-%Of note is the command \verb+\citet+, which produces citations appropriate for use in inline text. 
-%Footnotes should be used sparingly.  If you do require a footnote, indicate footnotes with a number\footnote{Sample of the first footnote.} in the text. Place the footnotes at the bottom of the page on which they appear. Note that footnotes are properly typeset \emph{after} punctuation
-%\begin{figure}[h]
-%  \centering
-%  \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-%  \caption{Sample figure caption.}
-%\end{figure}
-%\begin{table}[t]
-%  \caption{Sample table title}
-%  \label{sample-table}
-%  \centering
-%  \begin{tabular}{lll}
-%    \toprule
-%    \multicolumn{2}{c}{Part}                   \\
-%    \cmidrule{1-2}
-%    Name     & Description     & Size ($\mu$m) \\
-%    \midrule
-%    Dendrite & Input terminal  & $\sim$100     \\
-%    Axon     & Output terminal & $\sim$10      \\
-%    Soma     & Cell body       & up to $10-6$  \\
-%    \bottomrule
-%  \end{tabular}
-%\end{table}
 
 \end{document}

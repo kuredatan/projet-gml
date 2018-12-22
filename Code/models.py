@@ -43,6 +43,8 @@ class Bandit(object):
 			self.f[i] = 0
 		self.regret_arr = []
 		self.volume_arr = []
+		self.serendipity_arr = [self.f.values]
+		self.reward_arr = []
 
 	def get_unexplored_items(self):
 		candidates = []
@@ -61,22 +63,37 @@ class Bandit(object):
 			self.f[i] = 0
 		self.regret_arr = []
 		self.volume_arr = []
+		self.reward_arr = []
+		self.serendipity_arr = [self.f.values]
 
 	def plot_results(self):
 		n_iter = len(self.regret_arr)
 		plt.figure(1)
 		plt.title("Regret and diversity of the recommendations")
-		plt.subplot(121)
+		plt.subplot(131)
 		plt.plot(np.array(self.regret_arr).cumsum(), "r-", label="Regret")
 		plt.ylabel('(Expected) cumulative regret')
 		plt.xlabel('Rounds')
 		plt.legend()
-		plt.subplot(122)
+		plt.subplot(132)
 		plt.plot(np.array(self.volume_arr), "g-", label="Diversity")
 		plt.ylabel('Diversity of the recommendations')
 		plt.xlabel('Rounds')
 		plt.legend()
+		plt.subplot(133)
+		plt.plot(np.array(self.serendipity_arr).cumsum(), "b-", label="Serendipity (MC estimate)")
+		plt.ylabel('Serendipity value')
+		plt.xlabel('Rounds')
+		plt.legend()
 		plt.show()
+
+	def monte_carlo(self):
+		horizon = len(self.serendipity_arr)
+		## Compute random walk Laplacian
+		degree = self.graph.sum(1)
+		Lrw = np.eye(np.shape(self.graph)[0])-np.diag(1/degree).dot(self.graph)
+		serendipity_arr = [self.reward_arr[i]*np.dot(np.dot(self.serendipity_arr[i], Lrw), self.serendipity_arr[i+1].T)[0].tolist()[0]/float(sum(self.reward_arr)) for i in range(horizon-1)]
+		return serendipity_arr
 
 	def reward(self, action):
 		assert action in self.indexes.values and not self.f[action][0], "{} not in the set of objects".format(action)
@@ -118,6 +135,8 @@ class Bandit(object):
 		self.regret_arr.append(regret)
 		volume = self.parallelotope_volume()
 		self.volume_arr.append(volume)
+		self.serendipity_arr.append(self.f.values)
+		self.reward_arr.append(reward)
 		self.update(reward, action)
 
 ########################################################################################
@@ -200,23 +219,29 @@ class LinUCB(Bandit):
 		self.Zy += reward*self.features[a, :]
 		z_t = np.reshape(self.features[a, :], (1, self.n_features))
 		self.ZZ += np.multiply(np.transpose(z_t), z_t)
-		## Update lambda_ ? TODO
+		## lambda_ is kept constant
 		self.theta_hat = np.dot(np.linalg.inv(self.ZZ+self.lambda_*self.I), self.Zy)
 
 	def best_reward(self):
-		D = np.dot(self.features, self.real_theta)
+		candidates = self.get_unexplored_items()
+		n = len(candidates)
+		assert n > 0, "All {} actions have been explored!".format(self.f.size)
+		candidates = [np.where(c == self.indexes.values)[0].tolist()[0] for c in candidates]
+		D = np.dot(self.features, self.real_theta)[candidates]
 		return np.max(D)
 
 	def recommend(self):
-		n_a = self.n_actions
-		n_f = self.n_features
-		self.theta_hat = np.reshape(self.theta_hat, (n_f, 1))
-		phi = lambda a : np.reshape(self.features[a, :], (n_f, 1))
+		candidates = self.get_unexplored_items()
+		n = len(candidates)
+		assert n > 0, "All {} actions have been explored!".format(self.f.size)
+		unexplored = [np.where(c == self.indexes.values)[0].tolist()[0] for c in candidates]
+		self.theta_hat = np.reshape(self.theta_hat, (self.n_features, 1))
+		phi = lambda a : np.reshape(self.features[a, :], (self.n_features, 1))
 		phiT = lambda a : np.transpose(phi(a))
 		est = np.linalg.inv(self.ZZ+self.lambda_*self.I)
 		beta = lambda a : self.alpha*np.sqrt(np.dot(phiT(a), np.dot(est, phi(a))))
-		arm_values = [np.dot(phiT(a), self.theta_hat)[0, 0]+beta(a)[0,0] for a in range(n_a)]
-		action = self.indexes.values[arm_values.index(max(arm_values))]
+		arm_values = [np.dot(phiT(a), self.theta_hat)[0, 0]+beta(a)[0,0] for a in unexplored]
+		action = candidates[arm_values.index(max(arm_values))]
 		best_reward = self.best_reward()
 		return action, best_reward
 
@@ -233,6 +258,13 @@ class LinUCB(Bandit):
 
 ## Rotting Bandit			
 class Rotting(Bandit):
+	pass
+
+########################################################################################
+########################################################################################
+
+## Ad-Hoc method from [Abbassi et al.]			
+class AdHoc(Bandit):
 	pass
 
 ########################################################################################
@@ -272,18 +304,19 @@ class Recommender(Bandit):
 		candidates = np.array(candidates)[np.where(np.sum(W, 1) > 0)[0].tolist()].tolist()
 		## K-means + whiten?
 		## Use MiniBatchKMeans when |F| is too high
-		## Not using centroid graph with Floyd-Warshall TODO
+		## Not using centroid graph with Floyd-Warshall
+		nclusters = min(self.K, len(candidates))
 		F = self.features[candidates, :]
 		if (np.prod(np.shape(F)) > 500):
-			km = MiniBatchKMeans(n_clusters=self.K, random_state=0).fit(F)
+			km = MiniBatchKMeans(n_clusters=nclusters, random_state=0).fit(F)
 		else:
-			km = KMeans(n_clusters=self.K, random_state=0).fit(F)
+			km = KMeans(n_clusters=nclusters, random_state=0).fit(F)
 		centroids = km.cluster_centers_
 		dists = sd.squareform(sd.pdist(np.concatenate((F, centroids), 0), "sqeuclidean"))
-		dists = dists[-self.K:, :-self.K]
+		dists = dists[-nclusters:, :-nclusters]
 		## Select the node closest to each centroid
 		res = []
-		for i in range(self.K):
+		for i in range(nclusters):
 			#print((F[np.argmin(dists[i, :]), :] == np.asarray(centroids[i,:] > 0.5, dtype=float)).all())
 			res.append(candidates[np.argmin(dists[i, :])])
 		candidates = [self.indexes.values[k] for k in res]
@@ -300,14 +333,14 @@ class Recommender(Bandit):
 					support_k.append(id_a)
 			supports.append(support_k)
 		return candidates, supports
-	## TODO activated means reward > 3 (where max reward = 5, min reward = 1)
+	## activated means reward > 3 (where max reward = 5, min reward = 1)
 	def is_active_node(self, reward):
 		return(int(reward > 3))
 	## The recommend will return the candidate with the 
 	## highest expected spread, as described in [Lagrée et al.]
 	def recommend(self):
 		candidates, supports = self.select_candidates()
-		## TODO Need to reinitialize because the setting changes
+		## Need to reinitialize because the setting changes
 		nk = np.ones(self.K)
 		## sk[k, t, i] = 1 iff. node i is activated by candidate k at time t
 		sk = np.zeros((self.K, self.N, self.n_obj))

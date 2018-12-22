@@ -88,6 +88,7 @@ print("Number of iterations: " + str(n_iter) + ", horizon: " + str(horizon))
 recommender = switch[method_name]
 regret = np.zeros(horizon)
 volume = np.zeros(horizon)
+serendipity = np.zeros(horizon)
 nerr = 0
 for _ in tqdm(range(n_iter), "Benchmark " + method_name):
 	recommender.reinitialize()
@@ -96,6 +97,7 @@ for _ in tqdm(range(n_iter), "Benchmark " + method_name):
 			recommender.run(verbose=False)
 		regret += np.array(recommender.regret_arr)
 		volume += np.array(recommender.volume_arr)
+		serendipity += np.array(recommender.monte_carlo())
 	except AssertionError:
 		print("Assertion error!")
 		nerr += 1
@@ -108,6 +110,8 @@ if (n_iter > 0):
 	recommender.regret_arr = regret.tolist()
 	volume *= 1/float(n_iter)
 	recommender.volume_arr = volume.tolist()
+	serendipity *= 1/float(n_iter)
+	recommender.serendipity_arr = serendipity.tolist()
 	recommender.plot_results()
 
 ## Compare different values of serendipity threshold, ...
@@ -117,6 +121,7 @@ if (method_name == "lagree"):
 	m = len(s_values)
 	regret = np.zeros((horizon, m))
 	volume = np.zeros((horizon, m))
+	serendipity = np.zeros((horizon, m))
 	colors = ["k","r","b","g","c","p","m"][:m+1]
 	for i in range(m):
 		recommender = models.Recommender(X, W, features, s=s_values[i], K=args.K, N=args.N)
@@ -128,6 +133,7 @@ if (method_name == "lagree"):
 					recommender.run(verbose=False)
 				regret[:, i] += np.array(recommender.regret_arr)
 				volume[:, i] += np.array(recommender.volume_arr)
+				serendipity[:, i] += np.array(recommender.monte_carlo())
 			except AssertionError:
 				print("Assertion error!")
 				nerr += 1
@@ -138,18 +144,25 @@ if (method_name == "lagree"):
 		if (n_iter > 0):
 			regret[:, i] *= 1/float(n_iter)
 			volume[:, i] *= 1/float(n_iter)
+			serendipity[:, i] *= 1/float(n_iter)
 	plt.figure(1)
 	plt.title("Regret and diversity variation depending on the value of s parameter")
-	plt.subplot(121)
+	plt.subplot(131)
 	for i in range(m):
 		plt.plot(np.array(regret[:, i]).cumsum(), colors[i] + "-", label="Regret with s = " + str(s_values[i]))
 	plt.ylabel('(Expected) cumulative regret')
 	plt.xlabel('Rounds')
 	plt.legend()
-	plt.subplot(122)
+	plt.subplot(132)
 	for i in range(m):
-		plt.plot(np.array(volume[:, i]).cumsum(), colors[i] + "-", label="Volume with s = " + str(s_values[i]))
+		plt.plot(volume[:, i], colors[i] + "-", label="Volume with s = " + str(s_values[i]))
 	plt.ylabel('Diversity of the recommendations')
+	plt.xlabel('Rounds')
+	plt.legend()
+	plt.subplot(133)
+	for i in range(m):
+		plt.plot(serendipity[:, i].cumsum(), colors[i] + "-", label="Serendipity with s = " + str(s_values[i]))
+	plt.ylabel('Serendipity value')
 	plt.xlabel('Rounds')
 	plt.legend()
 	plt.show()

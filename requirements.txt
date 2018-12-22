@@ -1,0 +1,8 @@
+matplotlib>=2.2.2
+numpy>=1.14.3
+pandas>=0.23.0
+path.py>=11.0.1
+scikit-learn>=0.19.1
+scipy>=1.1.0
+seaborn>=0.8.1
+tqdm>=4.28.1
