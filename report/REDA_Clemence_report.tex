@@ -40,7 +40,7 @@
 \maketitle
 
 \begin{abstract}
-A lacking feature of current recommender systems is that they usually do not allow discovery of new elements, that is, an element that might be interesting, but which is different of what the user is \textit{used to}. This feature is subject to active research in the domain since 2001, because diversity of recommendation (in a general sense) might be useful in order to avoid overfitting or bias, or boredom of the user. Although the subject of diversity/discovery/... in recommender systems is not new, to the best of my knowledge, there is no formal definition of \textit{serendipity} (that is, a surprisingly good discovery) in the context of recommender systems. The goal of this project was (1) to formalize the problem of recommendation allowing serendipities; (2) to design a method which solves this problem in an online setting; (3) to evaluate its relevance with respect to naive and classic bandit models.
+A lacking feature of current recommender systems is that they usually do not allow discovery of new elements, that is, an element that might be interesting, but which is different of what the user is \textit{used to}. This feature is subject to active research in the domain since 2001, because diversity of recommendation (in a general sense) might be useful in order to avoid overfitting or bias, or boredom of the user. Although the subject of diversity/discovery/... in recommender systems is not new, to the best of my knowledge, there is no formal, satisfactory definition of \textit{serendipity} (that is, a surprisingly good discovery) in the context of recommender systems. The goal of this project was (1) to formalize the problem of recommendation allowing serendipities; (2) to design a method which solves this problem in an online setting; (3) to evaluate its relevance with respect to naive and classic bandit models.
 \end{abstract}
 
 \section{Introduction}
@@ -51,9 +51,9 @@ This "diversity-accuracy dilemma of recommender systems" (\cite{zhou2010solving}
 
 \section{Problem of Recommendation With Serendipity}
 
-Serendipities are objects that are unexpectedly enjoyable. Two users' reaction to a same recommended item can be poles apart. Thus the difference between serendipity and diversity (\cite{abbassi2009getting}) should be emphasized: diversity is meant to be strictly about recommended object dissimilarity, whereas the notion of serendipity also implicitly depends on the user's past behaviour. More formally, diversity can be quantified by the following measure (\cite{vie2016modeles}):
+Serendipities are objects that are unexpectedly enjoyable. Two users' reaction to a same recommended item can be poles apart. Thus the difference between serendipity and diversity (\cite{abbassi2009getting}) should be emphasized: diversity is meant to be strictly about recommended object (dis)similarity (see for instance (\cite{ziegler2005improving})), whereas the notion of serendipity also implicitly depends on the user's past behaviour. More formally, diversity can be quantified by the following measure (\cite{vie2016modeles}):
 
-\begin{equation}
+\begin{equation}\label{eq:01}
 \begin{split}
 D(V^{(t)}) & = \sqrt{|V^{(t)}.t(V^{(t)})|}\\
 & \mbox{(where $t$ is the number of rounds, $V^{(t)}$ is the matrix which lines are the feature vectors}\\
@@ -61,7 +61,7 @@ D(V^{(t)}) & = \sqrt{|V^{(t)}.t(V^{(t)})|}\\
 \end{split}
 \end{equation}
 
-\citet{abbassi2009getting} suggests a definition for $\mathscr{O}\mathscr{B}\mathscr{T}$-ness (\textit{outside-the-box} recommendations), which seems to be an equivalent of the definition of serendipity described above. It relies on a mixture of object and user similarity, and needs offline, fully built user and object similarity networks, along with a few custom parameters which meanings are not straightforward to grasp.
+\citet{abbassi2009getting} suggest a definition for $\mathscr{O}\mathscr{B}\mathscr{T}$-ness (\textit{outside-the-box} recommendations), which seems to be an equivalent of the definition of serendipity described above. It relies on a mixture of object and user similarity, and needs offline, fully built user and object similarity networks, along with a few custom parameters which meanings are not straightforward to grasp. \citet{murakami2007metrics} define a measure of \emph{unexpectedness} which rely on the definition of a baseline method (called "primitive prediction method") to which the accuracy of the method to be evaluated would be compared. \citet{iaquinta2008introducing} suggest the use of a Naive Bayes classifier on objects (classification as relevant or not with respect to the considered user), although Naive Bayes hypotheses are simplistic, and the algorithm aims at improving diversity in the sense I have described above.
 
 I suggest a definition of serendipity which only relies on:
 \begin{enumerate} 
@@ -72,20 +72,13 @@ I suggest a definition of serendipity which only relies on:
 
 The set of potential serendipities at time $t$ for user $u$ (with threshold $s$) is denoted $\mathscr{S}^{(t)}_{u,s}$ and described as follows:
 
-\begin{equation}
+\begin{equation}\label{eq:02}
 \begin{split}
-\mathscr{S}^{(t)}_{u,s} & = \argmax_{\substack{v \in V-\text{Supp}(f^{(t)}_{u})\\d(v, \text{Supp}(f^{(t)}_{u})) \leq s}} \mathbb{E}_{(f_{u},r_{u})}[ \sum_{v' \in V} [f^{t+1}_{u}(v")-f_{t}-u(v")]r_{u}(v") ]\\ %TODO
+\mathscr{S}^{(t)}_{u,s} & = \argmax_{\substack{v \in V-\text{Supp}(f^{(t)}_{u})\\d(v, \text{Supp}(f^{(t)}_{u})) \leq s}} \mathbb{E}_{(f_{u},r_{u})}[t(f^{(t)}_{u}-f^{(0)}_{u})r^{(t)}_{u} | f^{(0)}_{u}, r^{(0)}_{u}, ..., f^{(t-1)}_{u}, r^{(t-1)}_{u}, f^{(t)}_{u}[v] = 1 ]\\
 \end{split}
 \end{equation}
 
-where , , $d$ is the distance measure used to build $G$ and, for any subset $C$ of objects, $d(., C) = \text{min}_{c \in C} d(., c)$, and $s$ the so-called "serendipity threshold".\\
-
-Intuitively, they can be seen as objects, which are not in already explored regions at time $t$ (i.e. in set $V - \text{Supp}(f^{(t)}_{u})$), and which give the greatest increase in the diameter/support of explored regions of the graph, weighted by the known ratings given by the user $u$.
-
-No assumptions made on past behaviour and ratings. But not computable. More general than the previous definition. ratings may depend on user similarity!!
-
-where E is the expectation: exploration and rating of a node are drawn from a random distribution: when an object is recommended, we "make" the user explore the recommended node, and this modifies the exploration/rating distributions (if the user has enjoyed the recommended object, they will most likely be willing to explore the neighbours of this object).
-f-u would likely be submodular (a node can be explored only once, thus at a given point in time, the number of explored elements will increase less and less strongly).
+where $d$ is the distance measure of the length of the shortest path between two nodes, and, for any subset $C$ of objects, $d(., C) = \text{min}_{c \in C} d(., c)$, and $s$ the so-called "serendipity threshold". Intuitively, serendipities can be seen as objects, which are not in already explored regions at time $t$ (i.e. in set $V - \text{Supp}(f^{(t)}_{u})$), and which give the greatest increase in the diameter/support of explored regions of the graph, weighted by the known ratings given by the user $u$. Exploration and rating/reward of a node are drawn from a random distribution: when an object is recommended, we "make" the user explore the recommended node, and this modifies the exploration/rating distributions (if the user has enjoyed the recommended item, they will most likely be willing to explore its neighbours). The issue with this definition is that it is not readily computable. Nonetheless, sampling methods might be used to evaluate the function in Equation \ref{eq:02}. Note that $f_u$ would likely be submodular (a node can be explored only once, thus at a given point in time, the quantity $t(f^{(t)}_{u}-f^{(0)}_{u})$\textbf{1} will increase less and less strongly).
 
 \section{Solving the Problem of Recommendation With Serendipity}
 
@@ -140,29 +133,34 @@ W[i, j] & = 1 \mbox{ if $S(i,j) > \text{eps}$}\\
 \end{split}
 \end{equation}
 
-I have checked that the provided values for $\text{eps}$ and $\sigma^{2}$ had resulted in a connected graph (to avoid having a pair of movies being at infinite distance from each other).
+I have checked that the provided values for $\text{eps}$ and $\sigma^{2}$ had resulted in a connected graph (to avoid having a pair of movies being at infinite distance from each other). The two measures I have used to compare the different bandit models are:
 
-The two measures I have used to compare the different bandit models are:
 \begin{enumerate}
 \item The cumulative regret, which is defined as follows at time $T$:
 
 \begin{equation}
 \begin{split}
-R_{T} & = \\ 
+R_{T} & = \sum_{t \leq T} \text{max}_{a^{*} \in V-\text{Supp}(f^{(t)}_{u})} r(a^{*}) - r(a^{(t)})\\
+& \mbox{(where $a^{(t)}$ is the recommended item at time $t$)}\\ 
 \end{split}
 \end{equation}
 
-When computing the regret, we also assume that the best "arm" we could use is among the K selected candidates, thus that we do not question the method with which we select the candidates, which is an hypothesis made in the [Lagrée et al., 2017] article.
+Contrary to $r(a^{*})$, $r(a^{(t)})$ is a noisy observation of the true rating:
 
-\item 
+\begin{equation}
+\overline{r(a^{(t)})}$: $r(a^{(t)}) = \overline{r(a^{(t)})} + \theta ,
+\end{equation}
 
-This volume should increase more for recommendation with serendipity than for regular recommendation, because recommended objects are supposed to be less correlated.
+where $\theta \thicksim \mathscr{N}(0, 1)$ (normal distribution of mean $0$ and standard deviation $1$). When computing the regret for the adapted version of \citet{lagree2017effective}'s method, we also assume that the best arm we could use is among the $K$ selected candidates, thus that we do not challenge the candidate selection method, which is an hypothesis made in the original article.
+
+\item The diversity measure defined in Equation \ref{eq:01}. This volume should increase more for recommendation with serendipity than for regular recommendation, because recommended objects are supposed to be less correlated.
 
 \end{enumerate}
 
-Both of these measures are actually averaged across $n\_iter$ trajectories.
+Both of these measures are actually averaged across $n\_iter$ trajectories. See Figures \ref{figrandom}, \ref{figgreedy}, \ref{figlinUCB}, and \ref{figlagree}. It can be noticed that, in all but one figure, the diversity curve converge to zero as the number of rounds increases. It can be explained by the fact that the total number of movies for user $2$ is $129$, and at each round a new item is recommended, thus explored. Thus it makes sense that at some point, the feature vectors associated with the explored items might be correlated, thus leading to a zero determinant and a null parallelotope volume. From the regret curve, as expected, LinUCB is the most accurate of the methods, but performs poorly with respect to the diversity measure, which is constant. It is due to the fact that once it finds the best arm, it repeatedly plays it. The adapted method has a quasi-linear regret curve, although it performs better than the other methods with respect to the diversity measure. Figure \ref{figlagreecomp} compares the performance of the method for varying values of the serendipity threshold $s$. According to this figure, the algorithm performs best for $s=4$ both in terms of diversity and regret. The evolution of the regret (resp. diversity) curve depending on the value of $s$ cannot straightforwardly infered; it might need a benchmark on another dataset, or a higher value of $n\_iter$ to be able to draw conclusions from the figures. Note that the horizon cannot exceed $\approx 120$, because the total number of items in the $\text{ml-1m}$ subset of MovieLens for user denoted $u=2$ is around this number.
 
-%TODO use Monte-Carlo estimate in the benchmark
+TODO Since the definition of serendipity \ref{eq:02} cannot be computed directly (because we do not know the distribution of $(f_{u}, r_{u})$), we will use a Monte-Carlo estimate (i.e. the empirical mean) to assess the evolution of the function associated with serendipities.
+%TODO
 
 \begin{algorithm}
 \begin{algorithmic}
@@ -197,6 +195,7 @@ Both of these measures are actually averaged across $n\_iter$ trajectories.
   \includegraphics[scale=0.5]{../Results/random_4min40sec.png}
   \rule[-.5cm]{4cm}{0cm}
   \caption{[Random strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\label{figrandom}
 \end{figure}
 
 \begin{figure}[H]
@@ -205,6 +204,7 @@ Both of these measures are actually averaged across $n\_iter$ trajectories.
   \includegraphics[scale=0.5]{../Results/greedy_51min6sec.png}
   \rule[-.5cm]{4cm}{0cm}
   \caption{[$\epsilon$-greedy strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $\epsilon=0.2$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\label{figgreedy}
 \end{figure}
 
 \begin{figure}[H]
@@ -213,6 +213,7 @@ Both of these measures are actually averaged across $n\_iter$ trajectories.
   \includegraphics[scale=0.5]{../Results/linUCB_6min4sec.png}
   \rule[-.5cm]{4cm}{0cm}
   \caption{[LinUCB strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $\alpha=0.1$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\label{figlinUCB}
 \end{figure}
 
 \begin{figure}[H]
@@ -221,6 +222,7 @@ Both of these measures are actually averaged across $n\_iter$ trajectories.
   \includegraphics[scale=0.5]{../Results/lagree_36min16sec.png}
   \rule[-.5cm]{4cm}{0cm}
   \caption{[Adapted method strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $K=5, s=1, N=10$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\label{figlagree}
 \end{figure}
 
 \begin{figure}[H]
@@ -229,6 +231,7 @@ Both of these measures are actually averaged across $n\_iter$ trajectories.
   \includegraphics[scale=0.5]{../Results/lagree.png}
   \rule[-.5cm]{4cm}{0cm}
   \caption{[Adapted method strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $K=5, N=10$ with varying parameter $s=1, 2, 3, 4, 5$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\label{figlagreecomp}
 \end{figure}
 
 \begin{table}[H]
@@ -251,6 +254,15 @@ Both of these measures are actually averaged across $n\_iter$ trajectories.
 Note that the runtimes listed in Table \ref{runtimes} use Python implementations of each bandit model; coding them in C++ instead would have probably made everything faster. The code itself is not really optimized either, and this may account for the slowness of $\epsilon$-greedy and the adapted method.
 
 \section{Discussion}
+
+TODO
+%TODO
+
+\begin{enumerate}
+\item Rotting Bandits
+\item \cite{abbassi2009getting}'s method
+\item Using similarity between users?
+\end{enumerate}
 
 %\subsubsection*{Acknowledgments} TODO
 %Many thanks to Claire Vernade for mentoring me.

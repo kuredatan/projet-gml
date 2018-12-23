@@ -18,7 +18,7 @@ The goal of this project is to formalize the problem (in particular, the modelli
 
 ## Code
 
-### Needed modules
+**Needed modules**
 
 If you are using **pip**, you can run:
 
@@ -28,7 +28,7 @@ pip install -r requirements.txt
 
 The code was successfully run on **Python 3.6**, and should work (with some warnings) with **Python 2.7**.
 
-### Documentation
+**Documentation**
 
 The */code* folder contains three **Python** files:
 
