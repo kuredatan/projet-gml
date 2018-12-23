@@ -43,8 +43,12 @@ class Bandit(object):
 			self.f[i] = 0
 		self.regret_arr = []
 		self.volume_arr = []
-		self.serendipity_arr = [self.f.values]
-		self.reward_arr = []
+		self.serendipity_arr = []
+		#self.W = self.graph.values	
+		#for i in range(self.n_obj):
+		#	action = self.indexes.values[i]
+		#	rew = np.array([self.draw_reward(action) for _ in range(self.n_obj)])
+		#	self.W[:, i] = np.multiply(self.W[:, i], rew)
 
 	def get_unexplored_items(self):
 		candidates = []
@@ -64,7 +68,12 @@ class Bandit(object):
 		self.regret_arr = []
 		self.volume_arr = []
 		self.reward_arr = []
-		self.serendipity_arr = [self.f.values]
+		self.serendipity_arr = []
+		#self.W = self.graph.values	
+		#for i in range(self.n_obj):
+		#	action = self.indexes.values[i]
+		#	rew = np.array([self.draw_reward(action) for _ in range(self.n_obj)])
+		#	self.W[:, i] = np.multiply(self.W[:, i], rew)
 
 	def plot_results(self):
 		n_iter = len(self.regret_arr)
@@ -87,20 +96,17 @@ class Bandit(object):
 		plt.legend()
 		plt.show()
 
-	def monte_carlo(self):
-		horizon = len(self.serendipity_arr)
-		## Compute random walk Laplacian
-		degree = self.graph.sum(1)
-		Lrw = np.eye(np.shape(self.graph)[0])-np.diag(1/degree).dot(self.graph)
-		serendipity_arr = [self.reward_arr[i]*np.dot(np.dot(self.serendipity_arr[i], Lrw), self.serendipity_arr[i+1].T)[0].tolist()[0]/float(sum(self.reward_arr)) for i in range(horizon-1)]
-		return serendipity_arr
-
-	def reward(self, action):
-		assert action in self.indexes.values and not self.f[action][0], "{} not in the set of objects".format(action)
+	def draw_reward(self, action):
+		assert action in self.indexes.values, "{} not in the set of objects".format(action)
 		## Draw noise from a Gaussian distribution
 		sigma = np.random.normal(self.eps[0], self.eps[1])
 		mu = float(self.R.iloc[np.where(action == self.indexes.values)[0].tolist()[0]].Rating)
 		reward = round(mu + sigma, 3)
+		return reward
+
+	def reward(self, action):
+		assert not self.f[action][0], "{} already explored!".format(action)
+		reward = self.draw_reward(action)
 		self.f[action] = 1
 		return reward
 
@@ -120,6 +126,19 @@ class Bandit(object):
 		V = self.features[explored, :]
 		return np.sqrt(np.linalg.det(np.dot(V, V.T)+lbda*np.eye(len(explored))))
 
+	def serendipity_value(self):
+		#f = np.where(self.f.values[0] == 1)[0]
+		#nf = np.where(self.f.values[0] == 0)[0]
+		## do not yield any more reward
+		#W = self.W+1
+		#W[f, f] = 0
+		#W -= 1
+		#W = (W+W.T)/2
+		#D = np.diag(np.sum(W > 0, 1))
+		#L = np.dot(np.linalg.inv(D), D-W)
+		#svalue = np.dot(self.f.values, np.dot(L, self.f.values.T))[0][0]
+		return 0#svalue
+
 	def recommend(self):
 		pass
 
@@ -135,7 +154,8 @@ class Bandit(object):
 		self.regret_arr.append(regret)
 		volume = self.parallelotope_volume()
 		self.volume_arr.append(volume)
-		self.serendipity_arr.append(self.f.values)
+		serendipity = self.serendipity_value()
+		self.serendipity_arr.append(serendipity)
 		self.reward_arr.append(reward)
 		self.update(reward, action)
 

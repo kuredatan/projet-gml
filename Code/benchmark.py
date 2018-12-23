@@ -97,7 +97,7 @@ for _ in tqdm(range(n_iter), "Benchmark " + method_name):
 			recommender.run(verbose=False)
 		regret += np.array(recommender.regret_arr)
 		volume += np.array(recommender.volume_arr)
-		serendipity += np.array(recommender.monte_carlo())
+		serendipity += np.array(recommender.serendipity_arr)
 	except AssertionError:
 		print("Assertion error!")
 		nerr += 1
@@ -133,7 +133,8 @@ if (method_name == "lagree"):
 					recommender.run(verbose=False)
 				regret[:, i] += np.array(recommender.regret_arr)
 				volume[:, i] += np.array(recommender.volume_arr)
-				serendipity[:, i] += np.array(recommender.monte_carlo())
+				## Normalized values
+				serendipity[:, i] += np.array(recommender.serendipity_arr)
 			except AssertionError:
 				print("Assertion error!")
 				nerr += 1
@@ -161,7 +162,7 @@ if (method_name == "lagree"):
 	plt.legend()
 	plt.subplot(133)
 	for i in range(m):
-		plt.plot(serendipity[:, i].cumsum(), colors[i] + "-", label="Serendipity with s = " + str(s_values[i]))
+		plt.plot(serendipity[:, i], colors[i] + "-", label="Serendipity with s = " + str(s_values[i]))
 	plt.ylabel('Serendipity value')
 	plt.xlabel('Rounds')
 	plt.legend()
