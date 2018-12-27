@@ -7,6 +7,10 @@ import numpy as np
 import random
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+from time import time
+import os
+
+## python3.6 benchmark.py --data ml-20m --user 1 --eps 0.6 --var 100 --niter 100 --horizon 100 --method random
 
 # For replication
 random.seed(123456789)
@@ -48,23 +52,26 @@ args = parser.parse_args()
 
 path = "../Datasets/"
 dataset = path + args.data + "/"
+
+if not os.path.exists(dataset):
+	os.mkdir(dataset)
+
 if (dataset == "../Datasets/ml-1m/"):
 	n_objects = 3706//2
+if (dataset == "../Datasets/ml-20m/"):
+	n_objects = 20000264//8
+
 rn = dataset + "ratings_u="+str(args.user)+"_no="+str(n_objects)+".dat"
-X = pd.read_csv(rn, sep=',', names = ['UserID', 'MovieID', 'Rating', 'Timestamp'], 
-	encoding = 'latin1', engine = 'python')
-X = X.iloc[range(1, X.size//4), :]
 on = dataset + "objects_u="+str(args.user)+"_no="+str(n_objects)+".dat"
-X_objects = pd.read_csv(on,  sep=',', 
-	names = ['MovieID', 'Title', 'Genres'],  
-	encoding = 'latin1', engine ='python')
-X_objects = X_objects.iloc[range(1, X_objects.size//3), :]
 gn = dataset + "graph_u="+str(args.user)+"_no="+str(n_objects)+"_eps="+str(args.eps)+"_k="+str(args.k)+"_var="+str(args.var)+".dat"
+fn = dataset + "features_u="+str(args.user)+"_no="+str(n_objects)+".dat"
+
+X = pd.read_csv(rn, sep=',',  encoding = 'latin1', engine = 'python')
+X_objects = pd.read_csv(on,  sep=',', encoding = 'latin1', engine ='python')
+features = np.loadtxt(fn, delimiter=',')
 labels = [X_objects["MovieID"].iloc[i] for i in range(X_objects.MovieID.size)]
 W = pd.read_csv(gn, sep=',', names = labels, encoding = 'latin1', engine = 'python')
 W = W.iloc[range(1, W.size//len(labels)), :]
-fn = dataset + "features_u="+str(args.user)+"_no="+str(n_objects)+".dat"
-features = np.loadtxt(fn, delimiter=',')
 
 ##################
 ## BENCHMARK    ##
@@ -90,11 +97,15 @@ regret = np.zeros(horizon)
 volume = np.zeros(horizon)
 serendipity = np.zeros(horizon)
 nerr = 0
+times = []
 for _ in tqdm(range(n_iter), "Benchmark " + method_name):
 	recommender.reinitialize()
 	try:
+		tic = time()
 		for __ in range(horizon):
 			recommender.run(verbose=False)
+		toc = time()
+		times.append(toc-tic)
 		regret += np.array(recommender.regret_arr)
 		volume += np.array(recommender.volume_arr)
 		serendipity += np.array(recommender.serendipity_arr)
@@ -102,6 +113,14 @@ for _ in tqdm(range(n_iter), "Benchmark " + method_name):
 		print("Assertion error!")
 		nerr += 1
 		pass
+runtime = round(sum(times)/n_iter, 2)
+h = runtime//3600
+m = (runtime-h)//60
+s = round(runtime-h-m)
+h = str(h)+"h" if (h>0) else ""
+m = str(m)+"min" if (m>0) else ""
+s = str(s)+"sec" if (s>0) else ""
+rt = h+m+s
 ## To smooth the regret/volume curve
 print("There have been " + str(nerr) + " errors/" + str(n_iter) + " iterations.")
 n_iter -= nerr
@@ -113,6 +132,8 @@ if (n_iter > 0):
 	serendipity *= 1/float(n_iter)
 	recommender.serendipity_arr = serendipity.tolist()
 	recommender.plot_results()
+	#plt.show()
+	plt.savefig("../Results/"+args.data+"/"+args.method+"-"+rt+".png", bbox_inches="tight")
 
 ## Compare different values of serendipity threshold, ...
 if (method_name == "lagree"):
@@ -146,7 +167,7 @@ if (method_name == "lagree"):
 			regret[:, i] *= 1/float(n_iter)
 			volume[:, i] *= 1/float(n_iter)
 			serendipity[:, i] *= 1/float(n_iter)
-	plt.figure(1)
+	plt.figure(figsize=(20, 4.19))
 	plt.title("Regret and diversity variation depending on the value of s parameter")
 	plt.subplot(131)
 	for i in range(m):
@@ -166,4 +187,5 @@ if (method_name == "lagree"):
 	plt.ylabel('Serendipity value')
 	plt.xlabel('Rounds')
 	plt.legend()
-	plt.show()
+	#plt.show()
+	plt.savefig("../Results/"+args.data+"/lagree.png", bbox_inches="tight")

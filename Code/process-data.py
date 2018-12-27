@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import scipy.spatial.distance as sd
 import seaborn as sns
 
+## python3.6 process-data.py --data ml-1m --user 1 --eps 0.6 --var 100
+
 parser = argparse.ArgumentParser(description='Recommender system')
 parser.add_argument('--data', type=str, default='ml-1m', metavar='D',
                     help='folder where data is located.')
@@ -34,62 +36,76 @@ usern = 1
 
 if (dataset == "../Datasets/ml-1m/"):
 	n_objects = 3706//2
-	rn = dataset + "ratings_u="+str(args.user)+"_no="+str(n_objects)+".dat"
-	un = dataset + "users_u="+str(args.user)+"_no="+str(n_objects)+".dat"
-	on = dataset + "objects_u="+str(args.user)+"_no="+str(n_objects)+".dat"
-	if (not os.path.exists(rn) or not os.path.exists(un) or not os.path.exists(on)):
-		ratings = pd.read_table(dataset + 'ratings.dat', sep='::', 
-			names = ['UserID', 'MovieID', 'Rating', 'Timestamp'], 
-			encoding = 'latin1', engine = 'python')
-		objects = pd.read_table(dataset + 'movies.dat',  sep='::', 
-			names = ['MovieID', 'Title', 'Genres'],  
-			encoding = 'latin1', engine ='python')
-		users = pd.read_table(dataset + 'users.dat',  sep='::', 
-			names = ['UserID', 'Gender', 'Age', 'Occupation', 'Zip'], 
-			encoding = 'latin1', engine = 'python')
-		m = len(ratings.MovieID.unique())
-		n = len(ratings.UserID.unique())
-		n_objects = m//2
-		print("#objects = " + str(m) + " -- #users = " + str(n))
-		id_users = [args.user]
-		X_users = users.loc[users.UserID.isin(id_users)]
-		## Select less than m//2 objects with at least N=1 ratings with the user
-		## to lessen the effect of missing data in the dataset
-		id_objects = ratings.loc[ratings.UserID.isin(id_users)].MovieID.unique()[:n_objects]
-		X_objects = objects.loc[objects.MovieID.isin(id_objects)]
-		X = ratings.loc[ratings.MovieID.isin(id_objects)]
-		X = X.loc[X.UserID.isin(id_users)]
-		print("Dataframes are built")
-		print("|X_objects| = " + str(X_objects.size//3) + " x 3")
-		print("|X_users| = " + str(X_users.size//5) + " x 5")
-		print("|X| = " + str(X.size//4) + " x 4")
-		if (not os.path.exists(rn)):
-			X.to_csv(rn, sep=',')
-		if (not os.path.exists(un)):
-			X_users.to_csv(un, sep=',')
-		if (not os.path.exists(on)):
-			X_objects.to_csv(on, sep=',')
-		print("Done!")
-	else:
-		X = pd.read_csv(rn, sep=',', 
-			names = ['UserID', 'MovieID', 'Rating', 'Timestamp'], 
-			encoding = 'latin1', engine = 'python')
-		X = X.iloc[range(1, X.size//4), :]
-		X_users = pd.read_csv(un, sep=',', 
-			names = ['UserID', 'Gender', 'Age', 'Occupation', 'Zip'], 
-			encoding = 'latin1', engine = 'python')
-		X_users = X_users.iloc[range(1, X_users.size//5), :]
-		X_objects = pd.read_csv(on,  sep=',', 
-			names = ['MovieID', 'Title', 'Genres'],  
-			encoding = 'latin1', engine ='python')
-		X_objects = X_objects.iloc[range(1, X_objects.size//3), :]
+	nrows = None
+	ext = ".dat"
+	sep = "::"
+	names_r = ['UserID', 'MovieID', 'Rating', 'Timestamp']
+	names_u = ['UserID', 'Gender', 'Age', 'Occupation', 'Zip']
+	names_o = ['MovieID', 'Title', 'Genres']
+	columns_r = ['UserID', 'MovieID', 'Rating', 'Timestamp']
+	columns_u = ['UserID', 'Gender', 'Age', 'Occupation', 'Zip']
+	columns_o = ['MovieID', 'Title', 'Genres']
+if (dataset == "../Datasets/ml-20m/"):
+	n_objects = 20000264//8
+	## OK if we use the first users
+	nrows = 10000
+	ext = ".csv"
+	sep = ","
+	names_r, names_o, names_u = None, None, ['UserID', 'Gender', 'Age', 'Occupation', 'Zip']
+	columns_r = ['UserID', 'MovieID', 'Rating', 'Timestamp']
+	columns_u = ['UserID', 'Gender', 'Age', 'Occupation', 'Zip']
+	columns_o = ['MovieID', 'Title', 'Genres']
+
+rn = dataset + "ratings_u="+str(args.user)+"_no="+str(n_objects)+".dat"
+un = dataset + "users_u="+str(args.user)+"_no="+str(n_objects)+".dat"
+on = dataset + "objects_u="+str(args.user)+"_no="+str(n_objects)+".dat"
+if (not os.path.exists(rn) or not os.path.exists(un) or not os.path.exists(on)):
+	ratings = pd.read_table(dataset + 'ratings'+ext, sep=sep,
+		encoding = 'latin1', engine = 'python', names=names_r, nrows=nrows)
+	print("Ratings loaded! Size = " + str(ratings.size))
+	objects = pd.read_table(dataset + 'movies'+ext,  sep=sep, 
+		encoding = 'latin1', engine ='python', names=names_o, nrows=None)
+	print("Objects loaded! Size = " + str(objects.size))
+	users = pd.read_table(dataset + 'users'+ext,  sep=sep, 
+		encoding = 'latin1', engine = 'python', names=names_u, nrows=args.user+1)
+	print("Users loaded! Size = " + str(users.size))
+	ratings.columns = columns_r
+	users.columns = columns_u
+	objects.columns = columns_o
+	m = len(ratings.MovieID.unique())
+	n = len(ratings.UserID.unique())
+	n_objects = m//2
+	print("#objects = " + str(m) + " -- #users = " + str(n))
+	id_users = [args.user]
+	X_users = users.loc[users.UserID.isin(id_users)]
+	## Select less than m//2 objects with at least N=1 ratings with the user
+	## to lessen the effect of missing data in the dataset
+	id_objects = ratings.loc[ratings.UserID.isin(id_users)].MovieID.unique()[:n_objects]
+	X_objects = objects.loc[objects.MovieID.isin(id_objects)]
+	X = ratings.loc[ratings.MovieID.isin(id_objects)]
+	X = X.loc[X.UserID.isin(id_users)]
+	print("Dataframes are built")
+	print("|X_objects| = " + str(X_objects.size//3) + " x 3")
+	print("|X_users| = " + str(X_users.size//5) + " x 5")
+	print("|X| = " + str(X.size//4) + " x 4")
+	if (not os.path.exists(rn)):
+		X.to_csv(rn, sep=',')
+	if (not os.path.exists(un)):
+		X_users.to_csv(un, sep=',')
+	if (not os.path.exists(on)):
+		X_objects.to_csv(on, sep=',')
+	print("Done!")
+else:
+	X = pd.read_csv(rn, sep=',',  encoding = 'latin1', engine = 'python')
+	X_users = pd.read_csv(un, sep=',', encoding = 'latin1', engine = 'python')
+	X_objects = pd.read_csv(on,  sep=',', encoding = 'latin1', engine ='python')
 
 #######################
 # BUILD OBJECT GRAPH  #
 #######################
 
 ## Building object feature matrix
-if (dataset == "../Datasets/ml-1m/"):
+if (True):
 	fn = dataset + "features_u="+str(args.user)+"_no="+str(n_objects)+".dat"
 	if (not os.path.exists(fn)):
 		## Similarity on movies is using genres
@@ -123,7 +139,7 @@ def is_connected(adj):
 		adji=adji.dot(adj)
 	return len(np.where(adjn == 0)[0])==0
 
-if (dataset == "../Datasets/ml-1m/"):
+if (True):
 	gn = dataset + "graph_u="+str(args.user)+"_no="+str(n_objects)+"_eps="+str(args.eps)+"_k="+str(args.k)+"_var="+str(args.var)+".dat"
 	if (not os.path.exists(gn)):
 		assert args.eps + args.k != 0, "Choose either epsilon graph or k-nn graph"

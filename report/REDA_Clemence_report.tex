@@ -119,7 +119,7 @@ The candidate selection problem is hard. \citet{lagree2017effective} suggest get
 
 \section{Experiments}
 
-I have compared the adaptation of the method described above with LinUCB (described in \cite{chu2011contextual}), a completely random strategy (see Algorithm \ref{random}), and an $\epsilon$-greedy strategy (see Algorithm \ref{greedy}) on the dataset $\text{ml-1m}$ of MovieLens. 
+I have compared the adaptation of the method described above with LinUCB (described in \cite{chu2011contextual}), a completely random strategy (see Algorithm \ref{random}), and an $\epsilon$-greedy strategy (see Algorithm \ref{greedy}) on the datasets $\text{ml-1m}$ and $\text{ml-20m}$ of MovieLens. 
 
 First, I have selected all ratings associated with the input username, and restricted the benchmark to the movies rated at least once by the user (to avoid the issue of missing data).
 
@@ -147,7 +147,9 @@ R_{T} & = \sum_{t \leq T} \text{max}_{a^{*} \in V-\text{Supp}(f^{(t)}_{u})} r(a^
 Contrary to $r(a^{*})$, $r(a^{(t)})$ is a noisy observation of the true rating:
 
 \begin{equation}
-\overline{r(a^{(t)})}$: $r(a^{(t)}) = \overline{r(a^{(t)})} + \theta ,
+\begin{split}
+& \overline{r(a^{(t)})} \text{ such that } r(a^{(t)}) = \overline{r(a^{(t)})} + \theta\\
+\end{split}
 \end{equation}
 
 where $\theta \thicksim \mathscr{N}(0, 1)$ (normal distribution of mean $0$ and standard deviation $1$). When computing the regret for the adapted version of \citet{lagree2017effective}'s method, we also assume that the best arm we could use is among the $K$ selected candidates, thus that we do not challenge the candidate selection method, which is an hypothesis made in the original article.
@@ -156,10 +158,9 @@ where $\theta \thicksim \mathscr{N}(0, 1)$ (normal distribution of mean $0$ and 
 
 \end{enumerate}
 
-Both of these measures are actually averaged across $n\_iter$ trajectories. See Figures \ref{figrandom}, \ref{figgreedy}, \ref{figlinUCB}, and \ref{figlagree}. It can be noticed that, in all but one figure, the diversity curve converge to zero as the number of rounds increases. It can be explained by the fact that the total number of movies for user $2$ is $129$, and at each round a new item is recommended, thus explored. Thus it makes sense that at some point, the feature vectors associated with the explored items might be correlated, thus leading to a zero determinant and a null parallelotope volume. This might account for the fact that, although the $\epsilon$-greedy strategy should maximize the diversity measure in Equation \ref{eq:01}, it actually performs poorly, because at some point (especially in this dataset where there is only relatively a few values of possible feature vectors), any unexplored object has a feature vector (linearly) dependent with the set of explored object feature vectors, thus the diversity values are all zeroes, and then the strategy boils down to choosing the first object in the list of unexplored ones. From the regret curve, as expected, LinUCB is the most accurate of the methods, but performs poorly with respect to the diversity measure, which is constant. It is due to the fact that once it finds the best arm, it repeatedly plays it. The adapted method has a quasi-linear regret curve, although it performs better than the other methods with respect to the diversity measure. Figure \ref{figlagreecomp} compares the performance of the method for varying values of the serendipity threshold $s$. According to this figure, the algorithm performs best for $s=4$ both in terms of diversity and regret. The evolution of the regret (resp. diversity) curve depending on the value of $s$ cannot straightforwardly infered; it might need a benchmark on another dataset, or a higher value of $n\_iter$ to be able to draw conclusions from the figures. Note that the horizon cannot exceed $\approx 120$, because the total number of items in the $\text{ml-1m}$ subset of MovieLens for user denoted $u=2$ is around this number.
+Both of these measures are actually averaged across $n\_iter$ trajectories. See Figures \ref{figrandom}, \ref{figgreedy}, \ref{figlinUCB}, and \ref{figlagree}. It can be noticed that, in all but one figure, the diversity curve converge to zero as the number of rounds increases. It can be explained by the fact that the total number of movies for user $2$ is $129$ in dataset $\text{ml-1m}$ (for user $1$ in $\text{ml-20m}$, it is $175$), and at each round a new item is recommended, thus explored. Thus it makes sense that at some point, the feature vectors associated with the explored items might be correlated, thus leading to a zero determinant and a null parallelotope volume. This might account for the fact that, although the $\epsilon$-greedy strategy should maximize the diversity measure in Equation \ref{eq:01}, it actually performs poorly, because at some point (especially in this dataset where there is only relatively a few values of possible feature vectors), any unexplored object has a feature vector (linearly) dependent with the set of explored object feature vectors, thus the diversity values are all zeroes, and then the strategy boils down to choosing the first object in the list of unexplored ones. From the regret curve, as expected, LinUCB is the most accurate of the methods, but performs poorly with respect to the diversity measure, which is constant. It is due to the fact that once it finds the best arm, it repeatedly plays it. The adapted method has a quasi-linear regret curve, although it performs better than the other methods with respect to the diversity measure. Figure \ref{figlagreecomp} compares the performance of the method for varying values of the serendipity threshold $s$. According to this figure, the algorithm performs best for $s=4$ both in terms of diversity and regret. The evolution of the regret (resp. diversity) curve depending on the value of $s$ cannot straightforwardly infered; it might need a benchmark on another dataset, or a higher value of $n\_iter$ to be able to draw conclusions from the figures. Note that the horizon cannot exceed $\approx 120$, because the total number of items in the $\text{ml-1m}$ subset of MovieLens for user denoted $u=2$ is around this number. 
 
-TODO Since the definition of serendipity \ref{eq:02} cannot be computed directly (because we do not know the distribution of $(f_{u}, r_{u})$), we will use a Monte-Carlo estimate (i.e. the empirical mean) to assess the evolution of the function associated with serendipities.
-%TODO
+Since the definition of serendipity \ref{eq:02} cannot be computed directly (because we do not know the distribution of $(f_{u}, r_{u})$), we will use a Monte-Carlo estimate (i.e. the empirical mean) to assess the evolution of the function associated with serendipities.
 
 \begin{algorithm}
 \begin{algorithmic}
@@ -191,66 +192,112 @@ TODO Since the definition of serendipity \ref{eq:02} cannot be computed directly
 \begin{figure}[H]
   \centering
   \rule[-.5cm]{0cm}{4cm}
-  \includegraphics[scale=0.5]{../Results/random_4min40sec.png}
+  \includegraphics[scale=0.5]{../Results/ml-1m/random_4min40sec.png}
   \rule[-.5cm]{4cm}{0cm}
-  \caption{[Random strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+  \caption{[Random strategy] (Average) cumulative regret, diversity measure, and empirical serendipity value (maximized function in Equation \ref{eq:02}) over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
 \label{figrandom}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \rule[-.5cm]{0cm}{4cm}
-  \includegraphics[scale=0.5]{../Results/greedy_51min6sec.png}
+  \includegraphics[scale=0.5]{../Results/ml-1m/greedy_51min6sec.png}
   \rule[-.5cm]{4cm}{0cm}
-  \caption{[$\epsilon$-greedy strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $\epsilon=0.2$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+  \caption{[$\epsilon$-greedy strategy] (Average) cumulative regret, diversity measure, and empirical serendipity value (maximized function in Equation \ref{eq:02}) over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $\epsilon=0.2$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
 \label{figgreedy}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \rule[-.5cm]{0cm}{4cm}
-  \includegraphics[scale=0.5]{../Results/linUCB_6min4sec.png}
+  \includegraphics[scale=0.5]{../Results/ml-1m/linUCB_6min4sec.png}
   \rule[-.5cm]{4cm}{0cm}
-  \caption{[LinUCB strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $\alpha=0.1$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+  \caption{[LinUCB strategy] (Average) cumulative regret, diversity measure, and empirical serendipity value (maximized function in Equation \ref{eq:02}) over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $\alpha=0.1$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
 \label{figlinUCB}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \rule[-.5cm]{0cm}{4cm}
-  \includegraphics[scale=0.5]{../Results/lagree_36min16sec.png}
+  \includegraphics[scale=0.5]{../Results/ml-1m/lagree_36min16sec.png}
   \rule[-.5cm]{4cm}{0cm}
-  \caption{[Adapted method strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $K=5, s=1, N=10$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+  \caption{[Adapted method strategy] (Average) cumulative regret, diversity measure, and empirical serendipity value (maximized function in Equation \ref{eq:02}) over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $K=5, s=1, N=10$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
 \label{figlagree}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \rule[-.5cm]{0cm}{4cm}
-  \includegraphics[scale=0.5]{../Results/lagree.png}
+  \includegraphics[scale=0.5]{../Results/ml-1m/lagree.png}
   \rule[-.5cm]{4cm}{0cm}
-  \caption{[Adapted method strategy] (Average) cumulative regret and diversity measure over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $K=5, N=10$ with varying parameter $s=1, 2, 3, 4, 5$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+  \caption{[Adapted method strategy] (Average) cumulative regret, diversity measure, and empirical serendipity value (maximized function in Equation \ref{eq:02}) over $n\_iter=100$ trajectories, horizon $T=100$, for user $2$ in MovieLens dataset $\text{ml-1m}$ and parameter $K=5, N=10$ with varying parameter $s=1, 2, 3, 4, 5$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\label{figlagreecomp}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \rule[-.5cm]{0cm}{4cm}
+  \includegraphics[scale=0.5]{../Results/ml-20m/random010133.png}
+  \rule[-.5cm]{4cm}{0cm}
+  \caption{[Random strategy] (Average) cumulative regret, diversity measure, and empirical serendipity value (maximized function in Equation \ref{eq:02}) over $n\_iter=100$ trajectories, horizon $T=100$, for user $1$ in MovieLens dataset $\text{ml-20m}$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\label{figrandom}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \rule[-.5cm]{0cm}{4cm}
+  \includegraphics[scale=0.5]{../Results/ml-20m/greedy023331.png}
+  \rule[-.5cm]{4cm}{0cm}
+  \caption{[$\epsilon$-greedy strategy] (Average) cumulative regret, diversity measure, and empirical serendipity value (maximized function in Equation \ref{eq:02}) over $n\_iter=100$ trajectories, horizon $T=100$, for user $1$ in MovieLens dataset $\text{ml-20m}$ and parameter $\epsilon=0.2$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\label{figgreedy}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \rule[-.5cm]{0cm}{4cm}
+  \includegraphics[scale=0.5]{../Results/ml-20m/linUCB011016.png}
+  \rule[-.5cm]{4cm}{0cm}
+  \caption{[LinUCB strategy] (Average) cumulative regret, diversity measure, and empirical serendipity value (maximized function in Equation \ref{eq:02}) over $n\_iter=100$ trajectories, horizon $T=100$, for user $1$ in MovieLens dataset $\text{ml-20m}$ and parameter $\alpha=0.1$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\label{figlinUCB}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \rule[-.5cm]{0cm}{4cm}
+  \includegraphics[scale=0.5]{../Results/ml-20m/lagree021025.png}
+  \rule[-.5cm]{4cm}{0cm}
+  \caption{[Adapted method strategy] (Average) cumulative regret, diversity measure, and empirical serendipity value (maximized function in Equation \ref{eq:02}) over $n\_iter=100$ trajectories, horizon $T=100$, for user $1$ in MovieLens dataset $\text{ml-20m}$ and parameter $K=5, s=1, N=10$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
+\label{figlagree}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \rule[-.5cm]{0cm}{4cm}
+  \includegraphics[scale=0.5]{../Results/ml-20m/lagree.png}
+  \rule[-.5cm]{4cm}{0cm}
+  \caption{[Adapted method strategy] (Average) cumulative regret, diversity measure, and empirical serendipity value (maximized function in Equation \ref{eq:02}) over $n\_iter=100$ trajectories, horizon $T=100$, for user $1$ in MovieLens dataset $\text{ml-20m}$ and parameter $K=5, N=10$ with varying parameter $s=1, 2, 3, 4, 5$. In order to build the $\text{eps}$-neighbourhood similarity graph, I have used values $\text{eps}=0.6$, $\sigma^{2}=100$.}
 \label{figlagreecomp}
 \end{figure}
 
 \begin{table}[H]
-  \caption{Run times for $n\_iter=100$, horizon $T=100$ for each method.}
   \label{runtimes}
   \centering
   \begin{tabular}{lll}
-    \multicolumn{2}{c}{}                   \\
-    \cmidrule(r){1-2}
-    Method     & Run time    \\
+    \multicolumn{3}{c}{}                   \\
+    \cmidrule(r){1-3}
+    Method     & Average run time in dataset $\text{ml-1m}$ &  Average run time in dataset $\text{ml-20m}$  \\
     \midrule
-    random & 4 min. 40 sec.  \\
-    $\epsilon$-greedy & 51 min. 6 sec.  \\
-    LinUCB     & 6 min. 4 sec. \\
-    Adapted method     & 36 min. 16 sec.       \\
+    random & t & t  \\
+    $\epsilon$-greedy & t & t \\
+    LinUCB     & t & t\\
+    Adapted method     & t & t \\
     \bottomrule
   \end{tabular}
+  \caption{Average run times (over $n\_iter=100$) with horizon $T=100$.}
 \end{table}
 
 Note that the runtimes listed in Table \ref{runtimes} use Python implementations of each bandit model; coding them in C++ instead would have probably made everything faster. The code itself is not really optimized either, and this may account for the slowness of $\epsilon$-greedy and the adapted method.
+
 
 \section{Discussion}
 

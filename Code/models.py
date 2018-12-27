@@ -6,6 +6,7 @@ from random import sample
 import matplotlib.pyplot as plt
 from sklearn.cluster import MiniBatchKMeans, KMeans
 import scipy.spatial.distance as sd
+import scipy.sparse.csgraph as sc
 
 #####################
 ## Recommenders    ##
@@ -26,8 +27,8 @@ import scipy.spatial.distance as sd
 class Bandit(object):
 	def __init__(self, ratings, graph, features, perc_masked=0.8, eps=[0,1]):
 		self.n_ratings = ratings.size//len(ratings.columns)
-		self.R = ratings[1:]
-		self.indexes = self.R.MovieID
+		self.R = ratings
+		self.indexes = self.R.MovieID.astype(str)
 		self.n_obj = len(self.indexes)
 		self.graph = graph
 		self.eps = eps
@@ -44,11 +45,10 @@ class Bandit(object):
 		self.regret_arr = []
 		self.volume_arr = []
 		self.serendipity_arr = []
-		#self.W = self.graph.values	
-		#for i in range(self.n_obj):
-		#	action = self.indexes.values[i]
-		#	rew = np.array([self.draw_reward(action) for _ in range(self.n_obj)])
-		#	self.W[:, i] = np.multiply(self.W[:, i], rew)
+		## Edge distance (length of the shortest path) between all nodes
+		dist_matrix = sc.dijkstra(graph, directed=False, unweighted=True)
+		np.fill_diagonal(dist_matrix, np.inf)
+		self.dist_matrix = dist_matrix
 
 	def get_unexplored_items(self):
 		candidates = []
@@ -69,15 +69,10 @@ class Bandit(object):
 		self.volume_arr = []
 		self.reward_arr = []
 		self.serendipity_arr = []
-		#self.W = self.graph.values	
-		#for i in range(self.n_obj):
-		#	action = self.indexes.values[i]
-		#	rew = np.array([self.draw_reward(action) for _ in range(self.n_obj)])
-		#	self.W[:, i] = np.multiply(self.W[:, i], rew)
 
 	def plot_results(self):
 		n_iter = len(self.regret_arr)
-		plt.figure(1)
+		plt.figure(figsize=(20, 4.19))
 		plt.title("Regret and diversity of the recommendations")
 		plt.subplot(131)
 		plt.plot(np.array(self.regret_arr).cumsum(), "r-", label="Regret")
@@ -94,7 +89,7 @@ class Bandit(object):
 		plt.ylabel('Serendipity value')
 		plt.xlabel('Rounds')
 		plt.legend()
-		plt.show()
+		#plt.show()
 
 	def draw_reward(self, action):
 		assert action in self.indexes.values, "{} not in the set of objects".format(action)
@@ -126,18 +121,15 @@ class Bandit(object):
 		V = self.features[explored, :]
 		return np.sqrt(np.linalg.det(np.dot(V, V.T)+lbda*np.eye(len(explored))))
 
-	def serendipity_value(self):
-		#f = np.where(self.f.values[0] == 1)[0]
-		#nf = np.where(self.f.values[0] == 0)[0]
-		## do not yield any more reward
-		#W = self.W+1
-		#W[f, f] = 0
-		#W -= 1
-		#W = (W+W.T)/2
-		#D = np.diag(np.sum(W > 0, 1))
-		#L = np.dot(np.linalg.inv(D), D-W)
-		#svalue = np.dot(self.f.values, np.dot(L, self.f.values.T))[0][0]
-		return 0#svalue
+	def serendipity_value(self, action, reward):
+		unexplored = self.get_unexplored_items()
+		explored = list(filter(lambda x : not x in unexplored, self.indexes.values.tolist()))
+		rewards = [self.draw_reward(c) for c in unexplored]+[reward]
+		while (sum(rewards) == 0):
+			rewards = [self.draw_reward(c) for c in unexplored]+[reward]
+		idx = np.where(action == self.indexes.values)[0].tolist()[0]
+		idxs = [np.where(e == self.indexes.values)[0].tolist()[0] for e in explored]
+		return reward/sum(rewards)*np.min(self.dist_matrix[idx, idxs])
 
 	def recommend(self):
 		pass
@@ -154,7 +146,7 @@ class Bandit(object):
 		self.regret_arr.append(regret)
 		volume = self.parallelotope_volume()
 		self.volume_arr.append(volume)
-		serendipity = self.serendipity_value()
+		serendipity = self.serendipity_value(action, reward)
 		self.serendipity_arr.append(serendipity)
 		self.reward_arr.append(reward)
 		self.update(reward, action)
