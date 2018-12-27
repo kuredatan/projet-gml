@@ -114,9 +114,11 @@ for _ in tqdm(range(n_iter), "Benchmark " + method_name):
 		nerr += 1
 		pass
 runtime = round(sum(times)/n_iter, 2)
-h = runtime//3600
-m = (runtime-h)//60
-s = round(runtime-h-m)
+u = runtime/3600.0
+h = int(u)
+u = (u-h)*60
+m = int(u)
+s = int(round((u-m)*60))
 h = str(h)+"h" if (h>0) else ""
 m = str(m)+"min" if (m>0) else ""
 s = str(s)+"sec" if (s>0) else ""
@@ -183,7 +185,7 @@ if (method_name == "lagree"):
 	plt.legend()
 	plt.subplot(133)
 	for i in range(m):
-		plt.plot(serendipity[:, i], colors[i] + "-", label="Serendipity with s = " + str(s_values[i]))
+		plt.plot(np.array(serendipity[:, i]).cumsum(), colors[i] + "-", label="Serendipity with s = " + str(s_values[i]))
 	plt.ylabel('Serendipity value')
 	plt.xlabel('Rounds')
 	plt.legend()
