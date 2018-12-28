@@ -24,3 +24,34 @@ X Je vais mettre sous format NIPS et mieux rédiger le brouillon de rapport disp
 - DL of submission  7. 1. 2019
 on the DL for the submission, students send their project report to the supervisor listed as “Contact” and cc the course TA (pierre.perrault@outlook.com). 
 - project presentations from  11. 1. 2019  over skype/hangout about 15+5 minutes per project. time your presentation for 15 minutes  (otherwise your grade will be affected). Check your video/audio before and the way how you can share the slides on the screen. project presentations over skype/hangout students will contact the project supervisor (not the instructor or TA) and agree on the skype/hangout presentation
+
+--------------------------------------------------------------------------------
+
+reda@reda $ python3.6 benchmark.py --data ml-1m --user 2 --eps 0.6 --var 100 --niter 100 --horizon 100 --method lagree
+Number of iterations: 100, horizon: 100
+Benchmark lagree s = 1: 100%|███████████████| 100/100 [1:10:23<00:00, 29.62s/it]
+There have been 0 errors/100 iterations.
+Benchmark lagree s = 2: 100%|██████████████| 100/100 [1:30:15<00:00, 122.03s/it]
+There have been 0 errors/100 iterations.
+Benchmark lagree s = 3: 100%|█████████████████| 100/100 [48:14<00:00, 30.03s/it]
+There have been 0 errors/100 iterations.
+Benchmark lagree s = 4: 100%|███████████████| 100/100 [1:15:36<00:00, 29.95s/it]
+There have been 0 errors/100 iterations.
+Benchmark lagree s = 5: 100%|███████████████████████████████████████████████████████████████████████████████████| 100/100 [1:06:52<00:00, 56.91s/it]
+There have been 0 errors/100 iterations.
+
+reda@reda $ python3.6 benchmark.py --data ml-20m --user 1 --eps 0.6 --var 100 --niter 100 --horizon 100 --method lagree
+Number of iterations: 100, horizon: 100
+Benchmark lagree: 100%|█████████████████████| 100/100 [3:04:10<00:00, 61.56s/it]
+There have been 0 errors/100 iterations.
+Benchmark lagree s = 1: 100%|███████████████| 100/100 [1:28:10<00:00, 45.37s/it]
+There have been 0 errors/100 iterations.
+Benchmark lagree s = 2: 100%|███████████████| 100/100 [1:55:38<00:00, 73.54s/it]
+There have been 0 errors/100 iterations.
+Benchmark lagree s = 3: 100%|███████████████| 100/100 [1:45:01<00:00, 79.30s/it]
+There have been 0 errors/100 iterations.
+Benchmark lagree s = 4: 100%|███████████████████████████████████████████████████████████████████████████████████| 100/100 [1:45:42<00:00, 33.77s/it]
+There have been 0 errors/100 iterations.
+Benchmark lagree s = 5: 100%|█████████████████████████████████████████████████████████████████████████████████████| 100/100 [55:20<00:00, 34.04s/it]
+There have been 0 errors/100 iterations.
+
