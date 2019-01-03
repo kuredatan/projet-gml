@@ -43,16 +43,15 @@ There have been 0 errors/100 iterations.
 
 reda@reda $ python3.6 benchmark.py --data ml-20m --user 1 --eps 0.6 --var 100 --niter 100 --horizon 100 --method lagree
 Number of iterations: 100, horizon: 100
-Benchmark lagree: 100%|█████████████████████| 100/100 [3:04:10<00:00, 61.56s/it]
+Benchmark lagree s = 1: 100%|█████████████████| 100/100 [55:58<00:00, 31.59s/it]
 There have been 0 errors/100 iterations.
-Benchmark lagree s = 1: 100%|███████████████| 100/100 [1:28:10<00:00, 45.37s/it]
+Benchmark lagree s = 2: 100%|█████████████████| 100/100 [53:17<00:00, 35.27s/it]
 There have been 0 errors/100 iterations.
-Benchmark lagree s = 2: 100%|███████████████| 100/100 [1:55:38<00:00, 73.54s/it]
+Benchmark lagree s = 3: 100%|███████████████| 100/100 [1:53:03<00:00, 32.92s/it]
 There have been 0 errors/100 iterations.
-Benchmark lagree s = 3: 100%|███████████████| 100/100 [1:45:01<00:00, 79.30s/it]
+Benchmark lagree s = 4: 100%|█████████████████| 100/100 [53:04<00:00, 30.65s/it]
 There have been 0 errors/100 iterations.
-Benchmark lagree s = 4: 100%|███████████████████████████████████████████████████████████████████████████████████| 100/100 [1:45:42<00:00, 33.77s/it]
+Benchmark lagree s = 5: 100%|█████████████████| 100/100 [52:49<00:00, 31.52s/it]
 There have been 0 errors/100 iterations.
-Benchmark lagree s = 5: 100%|█████████████████████████████████████████████████████████████████████████████████████| 100/100 [55:20<00:00, 34.04s/it]
-There have been 0 errors/100 iterations.
+─( 20:07:26 )─< ..ojet/Projet GML/Code >─
 
