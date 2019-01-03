@@ -191,6 +191,27 @@ Since the definition of serendipity \ref{eq:02} cannot be computed directly (bec
 \label{greedy}
 \end{algorithm}
 
+Note that the runtimes listed in Table \ref{runtimes} use Python implementations of each bandit model; coding them in C++ instead would have probably made everything faster. The code itself is not really optimized either, and this may account for the slowness of $\epsilon$-greedy and the adapted method. The code for the benchmark and the algorithms is available at:
+
+\begin{center} \texttt{https://github.com/kuredatan/projet-gml} \end{center}
+
+\begin{table}[H]
+  \label{runtimes}
+  \centering
+  \begin{tabular}{lll}
+    \multicolumn{3}{c}{}                   \\
+    \cmidrule(r){1-3}
+    Method     & Average run time in dataset $\text{ml-1m}$ &  Average run time in dataset $\text{ml-20m}$  \\
+    \midrule
+    random & $32$ sec. & $48$ sec.  \\
+    $\epsilon$-greedy & $1$ min. $30$ sec. & $2$ min. $16$ sec.\\
+    LinUCB     & $39$ sec. & $53$ sec.\\
+    Adapted method     & $1$ min. $31$ sec. & $1$ min. $49$ sec. \\
+    \bottomrule
+  \end{tabular}
+  \caption{Average run times (over $n\_iter=100$) with horizon $T=100$.}
+\end{table}
+
 \begin{figure}[H]
   \centering
   %\rule[-.5cm]{0cm}{4cm}
@@ -281,35 +302,11 @@ Since the definition of serendipity \ref{eq:02} cannot be computed directly (bec
 \label{figlagreecomp}
 \end{figure}
 
-\begin{table}[H]
-  \label{runtimes}
-  \centering
-  \begin{tabular}{lll}
-    \multicolumn{3}{c}{}                   \\
-    \cmidrule(r){1-3}
-    Method     & Average run time in dataset $\text{ml-1m}$ &  Average run time in dataset $\text{ml-20m}$  \\
-    \midrule
-    random & $32$ sec. & $48$ sec.  \\
-    $\epsilon$-greedy & $1$ min. $30$ sec. & $2$ min. $16$ sec.\\
-    LinUCB     & $39$ sec. & $53$ sec.\\
-    Adapted method     & $1$ min. $31$ sec. & $1$ min. $49$ sec. \\
-    \bottomrule
-  \end{tabular}
-  \caption{Average run times (over $n\_iter=100$) with horizon $T=100$.}
-\end{table}
-
-Note that the runtimes listed in Table \ref{runtimes} use Python implementations of each bandit model; coding them in C++ instead would have probably made everything faster. The code itself is not really optimized either, and this may account for the slowness of $\epsilon$-greedy and the adapted method.
-
-
 \section{Discussion}
 
 One method which tries to tackle the problem of recommendation with serendipity has been suggested, and compared with classic and simple bandit strategies for recommendation. I also tried to suggest a relevant measure for serendipity, which is distinct from the diversity evaluation of the recommended items, and that I think brings something new on the table with respect to the current state-of-the-art. In order to better assess its relevance, it would be useful to compare its results with algorithms which have been designed to solve the problem of recommendation "avoiding boredom" (for instance, using Rotting Bandits in \cite{seznec2018rotting}), or "outside-the-box" (e.g. the method in \cite{abbassi2009getting}).
 
 Moreover, I have totally ignored the information that can be brought by modelling user behaviour, or using the similarity between two user's behaviours, to make the problem simpler. However, considering user similarity might be of paramount importance for better estimate serendipity, in order to reduce incertainty with respect to the user behaviour, for instance, by averaging or aggregating the behaviour of similarly-minded people.
-
-The code for the benchmark and the algorithms is available at:
-
-\begin{center} \texttt{https://github.com/kuredatan/projet-gml} \end{center}
 
 %Eventually, although I have said that there might be a way to formalize the equation about serendipity in terms of (object similarity) (possibly random walk) Graph Laplacian (up to reweighting using the reward observations), thus using the classic methods and potentially inheriting of interesting properties.
 
