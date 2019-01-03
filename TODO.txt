@@ -17,13 +17,14 @@ X Report 5-10 pages in NIPS format (on the top of your report: write the name of
 X Je vais essayer de mieux comprendre les résultats que j'ai obtenus
 X Je vais chercher les meilleurs paramètres pour chaque méthode
 X Je vais mettre sous format NIPS et mieux rédiger le brouillon de rapport disponible sur le GitHub
-- Je vais essayer d'implémenter un Rotting Bandit pour comparaison, et d'intégrer l'algorithme de l'article de recsys09 dans le benchmark
+O Je vais essayer d'implémenter un Rotting Bandit pour comparaison, et d'intégrer l'algorithme de l'article de recsys09 dans le benchmark
 
 ## DEADLINES
 
 - DL of submission  7. 1. 2019
 on the DL for the submission, students send their project report to the supervisor listed as “Contact” and cc the course TA (pierre.perrault@outlook.com). 
 - project presentations from  11. 1. 2019  over skype/hangout about 15+5 minutes per project. time your presentation for 15 minutes  (otherwise your grade will be affected). Check your video/audio before and the way how you can share the slides on the screen. project presentations over skype/hangout students will contact the project supervisor (not the instructor or TA) and agree on the skype/hangout presentation
+--> 17. 1. 2019
 
 --------------------------------------------------------------------------------
 
