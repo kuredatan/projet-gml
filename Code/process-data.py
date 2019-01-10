@@ -7,6 +7,7 @@ import os
 import matplotlib.pyplot as plt
 import scipy.spatial.distance as sd
 import seaborn as sns
+from tqdm import tqdm
 
 ## python3.6 process-data.py --data ml-1m --user 1 --eps 0.6 --var 100
 
@@ -59,6 +60,25 @@ if (dataset == "../Datasets/ml-20m/"):
 rn = dataset + "ratings_u="+str(args.user)+"_no="+str(n_objects)+".dat"
 un = dataset + "users_u="+str(args.user)+"_no="+str(n_objects)+".dat"
 on = dataset + "objects_u="+str(args.user)+"_no="+str(n_objects)+".dat"
+
+## https://www.kaggle.com/szelee/how-to-import-a-csv-file-of-55-million-rows
+def compute_average_rating_nb():
+	TRAIN_PATH = dataset + 'ratings'+ext
+	if (args.data == 'ml-1m'):
+		ratings = pd.read_table(dataset + 'ratings'+ext, sep=sep,
+			encoding = 'latin1', engine = 'python', names=names_r)
+		counts = ratings[['UserID', 'MovieID']].groupby('UserID').count().mean()
+	if (args.data == "ml-20m"):
+		chunksize = 5000000
+		df_list = []
+		cols = ['userId', 'movieId', 'rating', 'timestamp']
+		for df_chunk in tqdm(pd.read_csv(TRAIN_PATH, usecols=cols, dtype='str', chunksize=chunksize)):
+			df_list.append(df_chunk)
+		train_df = pd.concat(df_list)
+		del df_list
+		counts = train_df[['userId', 'movieId']].groupby('userId').count().mean()
+	return (counts)
+
 if (not os.path.exists(rn) or not os.path.exists(un) or not os.path.exists(on)):
 	ratings = pd.read_table(dataset + 'ratings'+ext, sep=sep,
 		encoding = 'latin1', engine = 'python', names=names_r, nrows=nrows)
