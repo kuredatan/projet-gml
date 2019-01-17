@@ -325,8 +325,10 @@ Apply the serendipity constraint on the set of candidates\\(and their supports) 
 
 %$K$: number of candidates in which the recommended item should be selected, $s$: serendipity threshold, $W$: (unweighted, undirected) similarity graph matrix, $n$: total number of objects, $f$: number of features, $F$: object feature matrix of size $n \times f$
 
+$W$ is the adjacency matrix of the object graph, $F$ feature matrix.
+
 \begin{algorithmic}[1]
-\STATE $S \leftarrow \text{Supp}(f^{(t)}_{u}) \cap \{c \in V : \exists i, 1 \leq i \leq s, W^{i}[c, \text{Supp}(f^{(t)}_{u})]\textbf{1} > 0 \}$
+\STATE $S \leftarrow \text{Supp}(f^{(t)}_{u})^{c} \cap \{c \in V : \exists i, 1 \leq i \leq s, W^{i}[c, \text{Supp}(f^{(t)}_{u})]\textbf{1} > 0 \}$
 \STATE $\text{centroids} \leftarrow \text{Kmeans}(\text{data}=F[S,:],\text{nclusters}=K)$
 \STATE $\text{candidates} \leftarrow \emptyset$
 \FOR{$c \in \text{centroids}$}
@@ -409,7 +411,7 @@ Apply the serendipity constraint on the set of candidates\\(and their supports) 
 \begin{block}{Cumulative regret}
 $a^{(t)}$ is the recommended item at time $t$:
 \begin{center}
-$R_{T} & = \sum_{t \leq T} \text{max} \{ a^{*} \text{explored} : r(a^{*}) - r(a^{(t)}) \}$
+$R_{T} & = \sum_{t \leq T} \text{max} \{ a^{*} \text{unexplored} : r(a^{*})\} - r(a^{(t)})$
 \end{center}
 \end{block}
 
@@ -418,9 +420,9 @@ $R_{T} & = \sum_{t \leq T} \text{max} \{ a^{*} \text{explored} : r(a^{*}) - r(a^
 \pause
 
 \begin{block}{Diversity measure (\cite{vie2016modeles})}
-$t$ is the number of rounds, $V^{(t)}$ is the feature matrix of explored objects up to time $t$
+$k$ is the number of rounds, $V^{(k)}$ is the feature matrix of explored objects up to time $k$
 \begin{center}
-$D(V^{(t)}) & = \sqrt{|V^{(t)}.t(V^{(t)})|}$
+$D(V^{(k)}) & = \sqrt{|V^{(k)}.t(V^{(k)})|}$
 \end{center}
 \end{block}
 
